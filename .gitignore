@@ -1,6 +1,22 @@
+# Files
+
 *.env
 *.xlsx
 *.csv
 *txt
+
+# Test analysis files
+
 Mayo9_ClaroScoreBeta_AnalisisTecnico.md
 Mayo9_ClaroScoreBeta_ResumenPruebasLocust.md
+
+# Directories
+
+Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/negras
+Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/Listas-CENAM
+Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/listas_revision
+Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/listas_negras
+Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/listas_blancas
+Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/errors_logging
+Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/console_log-results
+Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/blancas
