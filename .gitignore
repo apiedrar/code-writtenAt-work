@@ -1,0 +1,6 @@
+*.env
+*.xlsx
+*.csv
+*txt
+Mayo9_ClaroScoreBeta_AnalisisTecnico.md
+Mayo9_ClaroScoreBeta_ResumenPruebasLocust.md
