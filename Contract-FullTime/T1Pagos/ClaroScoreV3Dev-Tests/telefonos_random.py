@@ -15,13 +15,13 @@ while len(phone_numbers) < volume:
     phone_numbers.add(number)
 
 # Save to CSV file
-with open(os.path.expanduser('~/Documents/Code-Scripts/Work/Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/telefonos_RyP_Negativa.csv'), mode='w', newline='') as file:
+with open(os.path.expanduser('~/Downloads/telefonos.csv'), mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['phone number'])  # Header
     for phone_number in phone_numbers:
         writer.writerow([phone_numbers])
 
-print(f'{volume} unique 8 digit phone numbers have been generated and saved to "telefonos_8_digitos_unicos.csv".')
+print(f'{volume} unique 8 digit phone numbers have been generated and saved to "telefonos.csv".')
 
 
 

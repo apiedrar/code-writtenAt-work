@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel Data Matcher</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+        font-size: 2.5em;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .file-section {
+        margin-bottom: 25px;
+        padding: 20px;
+        border: 2px dashed #ddd;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .file-section:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+      }
+
+      .file-section h3 {
+        margin-top: 0;
+        color: #555;
+        font-size: 1.3em;
+      }
+
+      input[type="file"] {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+      }
+
+      input[type="file"]:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .process-btn {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 18px;
+        border-radius: 25px;
+        cursor: pointer;
+        display: block;
+        margin: 30px auto;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .process-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .process-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .results {
+        margin-top: 30px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .results h3 {
+        color: #333;
+        margin-bottom: 15px;
+      }
+
+      .download-btn {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 20px;
+        cursor: pointer;
+        margin: 10px 5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+      }
+
+      .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+      }
+
+      th {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        font-weight: 600;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f8f9fa;
+      }
+
+      tr:hover {
+        background-color: #e3f2fd;
+        transition: background-color 0.2s ease;
+      }
+
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        font-weight: 500;
+      }
+
+      .status.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .preview {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-top: 10px;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Excel Data Matcher</h1>
+
+      <div class="file-section">
+        <h3>📊 Excel File 1 (Source - Column A)</h3>
+        <p>
+          Upload the Excel file containing the lookup values in column A. This
+          file determines the order of results.
+        </p>
+        <input type="file" id="file1" accept=".xlsx,.xls" />
+      </div>
+
+      <div class="file-section">
+        <h3>📋 Excel File 2 (Reference - Columns A, D & I)</h3>
+        <p>
+          Upload the Excel file where column D contains matching values and
+          columns A & I contain the data to retrieve.
+        </p>
+        <input type="file" id="file2" accept=".xlsx,.xls" />
+      </div>
+
+      <button
+        class="process-btn"
+        id="processBtn"
+        onclick="processFiles()"
+        disabled
+      >
+        🔄 Match Data
+      </button>
+
+      <div id="results" class="results" style="display: none">
+        <h3>Results</h3>
+        <div id="status"></div>
+        <div id="downloadSection" style="display: none">
+          <button class="download-btn" onclick="downloadCSV()">
+            📥 Download as CSV
+          </button>
+          <button class="download-btn" onclick="downloadExcel()">
+            📊 Download as Excel
+          </button>
+        </div>
+        <div class="preview">
+          <table id="resultsTable">
+            <thead>
+              <tr>
+                <th>Original Order (Excel1 Col A)</th>
+                <th>Matched Data (Excel2 Col A)</th>
+                <th>Matched Data (Excel2 Col I)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let excel1Data = null;
+      let excel2Data = null;
+      let matchedResults = null;
+
+      // Enable process button when both files are loaded
+      document.getElementById("file1").addEventListener("change", checkFiles);
+      document.getElementById("file2").addEventListener("change", checkFiles);
+
+      function checkFiles() {
+        const file1 = document.getElementById("file1").files[0];
+        const file2 = document.getElementById("file2").files[0];
+        const processBtn = document.getElementById("processBtn");
+
+        if (file1 && file2) {
+          processBtn.disabled = false;
+          processBtn.innerHTML = "🔄 Match Data";
+        } else {
+          processBtn.disabled = true;
+        }
+      }
+
+      async function processFiles() {
+        const processBtn = document.getElementById("processBtn");
+        const resultsDiv = document.getElementById("results");
+        const statusDiv = document.getElementById("status");
+
+        processBtn.innerHTML = '<span class="loading"></span>Processing...';
+        processBtn.disabled = true;
+
+        try {
+          // Read both files
+          const file1 = document.getElementById("file1").files[0];
+          const file2 = document.getElementById("file2").files[0];
+
+          excel1Data = await readExcelFile(file1);
+          excel2Data = await readExcelFile(file2);
+
+          // Process the matching
+          matchedResults = matchData(excel1Data, excel2Data);
+
+          // Display results
+          displayResults(matchedResults);
+
+          statusDiv.innerHTML = `<div class="status success">
+                    ✅ Successfully processed ${matchedResults.length} rows. 
+                    Found ${
+                      matchedResults.filter((r) => r.matched).length
+                    } matches, 
+                    ${
+                      matchedResults.filter((r) => !r.matched).length
+                    } not found.
+                </div>`;
+
+          document.getElementById("downloadSection").style.display = "block";
+          resultsDiv.style.display = "block";
+        } catch (error) {
+          statusDiv.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+          resultsDiv.style.display = "block";
+        }
+
+        processBtn.innerHTML = "🔄 Match Data";
+        processBtn.disabled = false;
+      }
+
+      function readExcelFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              const data = new Uint8Array(e.target.result);
+              const workbook = XLSX.read(data, { type: "array" });
+              const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+              const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+                header: 1,
+              });
+              resolve(jsonData);
+            } catch (error) {
+              reject(new Error(`Error reading ${file.name}: ${error.message}`));
+            }
+          };
+          reader.onerror = () =>
+            reject(new Error(`Error reading ${file.name}`));
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      function matchData(excel1, excel2) {
+        const results = [];
+
+        // Create lookup map from excel2 (column D -> columns A and I)
+        const lookupMap = new Map();
+        for (let i = 1; i < excel2.length; i++) {
+          // Skip header row
+          const row = excel2[i];
+          if (row.length >= 4 && row[3] !== undefined && row[3] !== "") {
+            // Column D (index 3)
+            const key = String(row[3]).trim().toLowerCase();
+            const valueA = row[0] || ""; // Column A (index 0)
+            const valueI = row[8] || ""; // Column I (index 8)
+            lookupMap.set(key, { colA: valueA, colI: valueI });
+          }
+        }
+
+        // Process excel1 data (column A)
+        for (let i = 1; i < excel1.length; i++) {
+          // Skip header row
+          const row = excel1[i];
+          if (row.length > 0 && row[0] !== undefined && row[0] !== "") {
+            const lookupValue = String(row[0]).trim().toLowerCase();
+            const matchedData = lookupMap.get(lookupValue);
+
+            results.push({
+              original: row[0],
+              matched: matchedData !== undefined,
+              resultA: matchedData ? matchedData.colA : "NOT FOUND",
+              resultI: matchedData ? matchedData.colI : "NOT FOUND",
+            });
+          }
+        }
+
+        return results;
+      }
+
+      function displayResults(results) {
+        const tbody = document.getElementById("resultsBody");
+        tbody.innerHTML = "";
+
+        results.forEach((result, index) => {
+          const row = tbody.insertRow();
+          row.innerHTML = `
+                    <td>${result.original}</td>
+                    <td>${result.resultA}</td>
+                    <td>${result.resultI}</td>
+                    <td>${
+                      result.matched
+                        ? '<span style="color: green; font-weight: bold;">✓ Found</span>'
+                        : '<span style="color: red; font-weight: bold;">✗ Not Found</span>'
+                    }</td>
+                `;
+        });
+      }
+
+      function downloadCSV() {
+        if (!matchedResults) return;
+
+        let csv =
+          "Original Value,Matched Value (Col A),Matched Value (Col I),Status\n";
+        matchedResults.forEach((result) => {
+          csv += `"${result.original}","${result.resultA}","${
+            result.resultI
+          }","${result.matched ? "Found" : "Not Found"}"\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "matched_data.csv";
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
+
+      function downloadExcel() {
+        if (!matchedResults) return;
+
+        const ws_data = [
+          [
+            "Original Value",
+            "Matched Value (Col A)",
+            "Matched Value (Col I)",
+            "Status",
+          ],
+          ...matchedResults.map((result) => [
+            result.original,
+            result.resultA,
+            result.resultI,
+            result.matched ? "Found" : "Not Found",
+          ]),
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Matched Data");
+        XLSX.writeFile(wb, "matched_data.xlsx");
+      }
+    </script>
+  </body>
+</html>

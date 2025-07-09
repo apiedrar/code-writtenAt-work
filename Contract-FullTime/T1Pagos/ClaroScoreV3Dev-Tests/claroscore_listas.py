@@ -119,7 +119,7 @@ class ListGenerator:
     
     def _generate_phone(self):
         """Generates a valid Mexican phone number"""
-        # Format for Mexico: +52 AREA_CODE (2 or 3 digits) + number (8 or 7 digits)
+        # Format for Mexico: AREA_CODE (2 or 3 digits) + number (8 or 7 digits)
         format_type = random.choice([
             "{}{}",     # Only area code and number
         ])

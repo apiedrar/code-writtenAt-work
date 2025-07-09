@@ -4,6 +4,12 @@
 *.xlsx
 *.csv
 *txt
+*POC-BAZ
+ClaroScoreV3-TransactionEvaluation-BasicResponseExample.json
+ClaroScoreV3-TransactionEvaluation-FullResponseExample.json
+ClaroScoreV3-TransactionEvaluation-RequestExample.json
+ClaroScore-RequestBody-Example.json
+Response-Example.json
 
 # Test analysis files
 
@@ -12,11 +18,12 @@ Mayo9_ClaroScoreBeta_ResumenPruebasLocust.md
 
 # Directories
 
-Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/negras
-Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/Listas-CENAM
-Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/listas_revision
-Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/listas_negras
-Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/listas_blancas
-Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/errors_logging
-Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/console_log-results
-Contract-FullTime/T1Pagos/V2-ClaroScoreV3-Tests/blancas
+node_modules
+Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/negras
+Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/Listas-CENAM
+Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/listas_revision
+Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/listas_negras
+Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/listas_blancas
+Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/errors_logging
+Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/console_log-results
+Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/blancas

@@ -1,0 +1,32 @@
+{
+  "name": "api-scripts",
+  "version": "1.0.1",
+  "description": "Handle API data based on CSV IDs and save to Excel",
+  "main": "apiToExcel.js",
+  "scripts": {
+    "start": "node apiToExcel.js",
+    "evaluate": "node transactionEvaluation-T1Score.js",
+    "verify": "node verify-T1Score.js",
+    "sync": "node apiSync.js",
+    "refund": "node apiRefund.js",
+    "uuids": "node getUUIDs.js",
+    "stp": "node sendAbono.js",
+    "split": "node excelDocSplit.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "csv-parser": "^3.0.0",
+    "xlsx": "^0.18.5",
+    "dotenv": "^16.3.1",
+    "uuid": "^11.1.0",
+    "@faker-js/faker": "^9.9.0"
+  },
+  "keywords": [
+    "api",
+    "excel",
+    "csv",
+    "data-extraction"
+  ],
+  "author": "",
+  "license": "ISC"
+}
