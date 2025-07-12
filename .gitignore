@@ -19,6 +19,9 @@ Mayo9_ClaroScoreBeta_ResumenPruebasLocust.md
 # Directories
 
 node_modules
+Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests
+Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/__pycache__
+Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/ClaroScore-Originacion
 Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/negras
 Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/Listas-CENAM
 Contract-FullTime/T1Pagos/ClaroScoreV3Dev-Tests/listas_revision
