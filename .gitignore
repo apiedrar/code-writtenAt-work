@@ -2,7 +2,6 @@
 
 *.env
 *.xlsx
-*.csv
 
 # Directories
 
