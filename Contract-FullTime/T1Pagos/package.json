@@ -8,19 +8,20 @@
     "evaluate": "node transactionEvaluation-T1Score.js",
     "verify": "node verify-T1Score.js",
     "sync": "node apiSync.js",
+    "cancel": "node apiCancel.js",
     "refund": "node apiRefund.js",
     "uuids": "node getUUIDs.js",
     "stp": "node sendAbono.js",
     "split": "node excelDocSplit.js"
   },
   "dependencies": {
-    "axios": "^1.6.0",
-    "csv-parser": "^3.0.0",
+    "@faker-js/faker": "^9.9.0",
+    "axios": "^1.11.0",
+    "csv-parser": "^3.2.0",
     "csv-writer": "^1.6.0",
-    "xlsx": "^0.18.5",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.6.1",
     "uuid": "^11.1.0",
-    "@faker-js/faker": "^9.9.0"
+    "xlsx": "^0.18.5"
   },
   "keywords": [
     "api",

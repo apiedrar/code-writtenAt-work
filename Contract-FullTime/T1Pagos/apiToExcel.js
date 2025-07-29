@@ -206,7 +206,7 @@ async function main() {
   const inputCsvFile = path.join(
     require("os").homedir(),
     "Downloads",
-    "Query-RyP-20250708.csv"
+    "Query-RyP-20250727.csv"
   );
   const timestamp = new Date()
     .toISOString()

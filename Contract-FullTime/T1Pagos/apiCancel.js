@@ -7,20 +7,20 @@ require("dotenv").config();
 
 // Environment variables
 const apiToken = process.env.RyPAdmin_Token;
-const baseUrl = process.env.APIrefundBaseURL;
+const baseUrl = process.env.APIcancelBaseURL;
 
 /**
- * Make refund API requests based on cargo IDs and amounts from a CSV file,
+ * Make cancellation API requests based on cargo IDs and amounts from a CSV file,
  * and save the results to Excel.
  *
  * @param {string} inputCsvPath - Path to the input CSV file containing cargo IDs and amounts
  * @param {string} outputExcelPath - Path where the output Excel file will be saved
  * @param {string} baseUrl - Base API URL (without the endpoint path)
  * @param {string} cargoIdColumn - Name of the column in the CSV containing the cargo IDs (default: 'idCargo')
- * @param {string} amountColumn - Name of the column in the CSV containing the refund amounts (default: 'montoTotal')
+ * @param {string} amountColumn - Name of the column in the CSV containing the cancellation amounts (default: 'montoTotal')
  * @param {Object} headers - Headers for the API request including authorization
  */
-async function apiRefundRequests(
+async function apiCancelRequests(
   inputCsvPath,
   outputExcelPath,
   baseUrl,
@@ -66,8 +66,8 @@ async function apiRefundRequests(
     const cargoId = String(row[cargoIdColumn]);
     const montoTotal = row[amountColumn];
 
-    // Construct the refund endpoint URL
-    const url = `${baseUrl}/v1/cargo/${cargoId}/reembolsar`;
+    // Construct the cancellation endpoint URL
+    const url = `${baseUrl}/v1/cargo/${cargoId}/cancelar`;
 
     // Prepare the request body
     const requestBody = {
@@ -77,7 +77,7 @@ async function apiRefundRequests(
     console.log(
       `[${
         index + 1
-      }/${totalRows}] Requesting refund for cargo ID: ${cargoId}, amount: ${montoTotal}`
+      }/${totalRows}] Requesting cancellation for cargo ID: ${cargoId}, amount: ${montoTotal}`
     );
     console.log(`URL: ${url}`);
     console.log(`Body: ${JSON.stringify(requestBody)}`);
@@ -201,7 +201,7 @@ async function apiRefundRequests(
       const worksheet = XLSX.utils.json_to_sheet(orderedData);
 
       // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Refund Results");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Cancellation Results");
 
       // Save to Excel file
       XLSX.writeFile(workbook, outputExcelPath);
@@ -242,7 +242,7 @@ async function main() {
     const inputCsvFile = path.join(
       process.env.HOME || process.env.USERPROFILE,
       "Downloads",
-      "RyP-Refund-20250724.csv"
+      "RyP-Cancel-20250724.csv"
     );
     const timestamp = new Date()
       .toISOString()
@@ -251,7 +251,7 @@ async function main() {
     const outputExcelFile = path.join(
       process.env.HOME || process.env.USERPROFILE,
       "Downloads",
-      `Results-RyP-Refund-${timestamp}.xlsx`
+      `Results-RyP-Cancel-${timestamp}.xlsx`
     );
 
     // Headers with authorization token
@@ -260,8 +260,8 @@ async function main() {
       "Content-Type": "application/json",
     };
 
-    // Run the refund function
-    await apiRefundRequests(
+    // Run the cancel function
+    await apiCancelRequests(
       inputCsvFile,
       outputExcelFile,
       baseUrl,
@@ -280,4 +280,4 @@ if (require.main === module) {
 }
 
 // Export the function for use as a module
-module.exports = { apiRefundRequests };
+module.exports = { apiCancelRequests };
