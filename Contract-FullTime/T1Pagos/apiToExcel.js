@@ -213,6 +213,7 @@ async function main() {
     .replace(/[-:]/g, "")
     .replace(/\..+/, "")
     .replace("T", "-");
+    .replace("T", "-");
   const outputExcelFile = path.join(
     require("os").homedir(),
     "Downloads",
