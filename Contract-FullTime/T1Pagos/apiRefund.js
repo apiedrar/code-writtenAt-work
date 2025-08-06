@@ -6,7 +6,7 @@ const XLSX = require("xlsx");
 require("dotenv").config();
 
 // Environment variables
-const apiToken = process.env.RyPAdmin_Token;
+const apiToken = process.env.api_token;
 const baseUrl = process.env.APIrefundBaseURL;
 
 /**
@@ -242,7 +242,7 @@ async function main() {
     const inputCsvFile = path.join(
       process.env.HOME || process.env.USERPROFILE,
       "Downloads",
-      "RyP-Refund-20250724.csv"
+      "RyP-Refund-20250803.csv"
     );
     const timestamp = new Date()
       .toISOString()

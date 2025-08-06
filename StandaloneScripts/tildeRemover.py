@@ -5,8 +5,8 @@ import unicodedata
 import re
 
 # DEFINE FILE PATHS HERE
-INPUT_FILE = os.path.expanduser("~/Documents/MELI/Dia_31/ToProcess_10_31_2024.csv")  # CHANGE THIS to your input file path
-OUTPUT_FILE = os.path.expanduser("~/Documents/MELI/Dia_31/Processed_10_31_2024.xlsx")  # CHANGE THIS to the path where you want to save the result
+INPUT_FILE = os.path.expanduser("")  # CHANGE THIS to your input file path
+OUTPUT_FILE = os.path.expanduser("")  # CHANGE THIS to the path where you want to save the result
 
 def has_accent(text):
     """Checks if a text has accents."""

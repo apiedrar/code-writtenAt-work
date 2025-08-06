@@ -206,13 +206,13 @@ async function main() {
   const inputCsvFile = path.join(
     require("os").homedir(),
     "Downloads",
-    "Query-RyP-20250727.csv"
+    "Query-RyP-20250806.csv"
   );
   const timestamp = new Date()
     .toISOString()
     .replace(/[-:]/g, "")
     .replace(/\..+/, "")
-    .replace("T", "_");
+    .replace("T", "-");
   const outputExcelFile = path.join(
     require("os").homedir(),
     "Downloads",

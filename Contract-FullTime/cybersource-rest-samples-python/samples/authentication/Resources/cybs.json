@@ -1,0 +1,14 @@
+{
+  "authentication_type":"jwt",
+  "merchantid": "testrest",
+  "run_environment": "apitest.cybersource.com",
+  "key_alias": "testrest",
+  "key_password": "testrest",
+  "key_file_name": "testrest",
+  "keys_directory": "samples/authentication/Resources/",
+  "merchant_keyid": "08c94330-f618-42a3-b09d-e1e43be5efda",
+  "merchant_secretkey": "yBJxy6LjM2TmcPGu+GaJrHtkke25fPpUX+UY6/L/1tE=",
+  "proxy_address": "userproxy.visa.com",
+  "proxy_port": ""
+}
+
