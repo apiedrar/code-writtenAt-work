@@ -11,9 +11,10 @@ from importlib.machinery import SourceFileLoader
 import gc
 import urllib3
 import argparse
+from datetime import datetime
 
 # Configure connection pooling for urllib3 (used by requests/CyberSource)
-urllib3.PoolManager(maxsize=50, block=True)
+urllib3.PoolManager(maxsize=100, block=True)
 
 # Disable or configure logging to avoid errors
 python_logging.getLogger('CyberSource').setLevel(python_logging.ERROR)
@@ -52,38 +53,34 @@ def del_none(d):
             del_none(value)
     return d
 
-def create_line_items(row):
+def format_datetime(datetime_str):
     """
-    Creates line items array based on quantity.
-    If quantity > 1, creates multiple items with unitPrice = totalAmount / quantity
+    Converts datetime string to ISO format with timezone offset
+    Input: "2025-08-03 15:14:41" 
+    Output: "2025-08-03T15:14:41-06:00"
     """
     try:
-        quantity = int(float(row.get('items_quantity', 1)))
-        total_amount = float(row.get('local_currency_amt', 0))
-        item_name = row.get('item_name', '')
-        
-        # Calculate unit price by dividing total by quantity
-        unit_price = round(total_amount / quantity, 2) if quantity > 0 else total_amount
-        
-        # Create array of line items based on quantity
-        line_items = []
-        for i in range(quantity):
-            line_items.append({
-                "productName": item_name,
-                "unitPrice": str(unit_price),
-                "quantity": "1"  # Each item in array has quantity 1
-            })
-        
-        return line_items
-        
-    except (ValueError, TypeError, ZeroDivisionError) as e:
-        print(f"Error creating line items: {e}. Using default values.")
-        # Fallback to single item
-        return [{
-            "productName": row.get('item_name', ''),
-            "unitPrice": str(row.get('local_currency_amt', '0')),
-            "quantity": "1"
-        }]
+        # Parse the datetime string
+        dt = datetime.strptime(str(datetime_str).strip(), "%Y-%m-%d %H:%M:%S")
+        # Format to ISO with timezone (assuming Mexico timezone -06:00)
+        formatted_dt = dt.strftime("%Y-%m-%dT%H:%M:%S-06:00")
+        return formatted_dt
+    except Exception as e:
+        print(f"Error formatting datetime '{datetime_str}': {e}")
+        # Return current datetime as fallback
+        return datetime.now().strftime("%Y-%m-%dT%H:%M:%S-06:00")
+
+def determine_order_type(quantity):
+    """
+    Determines order type based on quantity
+    quantity = 1: "single item"
+    quantity > 1: "multiple items"
+    """
+    try:
+        qty = int(float(str(quantity).strip())) if str(quantity).strip() else 1
+        return "single item" if qty == 1 else "multiple items"
+    except:
+        return "single item"  # Default fallback
 
 def process_transaction(row, api_instance):
     """Processes a transaction through CyberSource with time measurement"""
@@ -132,20 +129,42 @@ def process_transaction(row, api_instance):
             postal_code=row.get('address_zip_code', '')
         )
 
-        # Create line items array based on quantity
-        line_items = create_line_items(row)
+        # Modified lineItems to include unitPrice and use proper array format
+        orderInformationLineItems = Riskv1addressverificationsOrderInformationLineItems(
+            quantity=row.get('items_quantity', '1'),
+            product_name=row.get('item_name', ''),  # Keep original value without conversion
+            unit_price=row.get('local_currency_amt', '0')  # Add unit price
+        )
+
+        # Create merchantDefinedInformation array
+        merchantDefinedInfo = []
+        
+        # Add dateTime field
+        if row.get('date_time'):
+            merchantDefinedInfo.append({
+                "key": "1",
+                "value": format_datetime(row['date_time'])
+            })
+        
+        # Add orderType field based on quantity
+        order_type = determine_order_type(row.get('items_quantity', '1'))
+        merchantDefinedInfo.append({
+            "key": "2", 
+            "value": order_type
+        })
 
         orderInformation = Riskv1decisionsOrderInformation(
             amount_details=orderInformationAmountDetails.__dict__,
             ship_to=orderInformationShipTo.__dict__,
             bill_to=orderInformationBillTo.__dict__,
-            line_items=line_items,  # Use the array directly
+            line_items=[orderInformationLineItems.__dict__],  # Make it an array
         )
         
         requestObj = CreateBundledDecisionManagerCaseRequest(
             client_reference_information=clientReferenceInformation.__dict__,
             payment_information=paymentInformation.__dict__,
-            order_information=orderInformation.__dict__
+            order_information=orderInformation.__dict__,
+            merchant_defined_information=merchantDefinedInfo  # Add merchantDefinedInformation
         )
         
         requestObj = del_none(requestObj.__dict__)
@@ -201,10 +220,11 @@ def process_in_batches(rows, output_csv, fieldnames, batch_size=50):
             # Show progress with email and response time included
             email = row.get('email', 'N/A')
             quantity = row.get('items_quantity', '1')
-            print(f"Transaction {row_index+1}/{total_rows}: Status {status}, Email: {email}, Quantity: {quantity}, Time: {response_time}ms")
+            order_type = determine_order_type(quantity)
+            print(f"Transaction {row_index+1}/{total_rows}: Status {status}, Email: {email}, Quantity: {quantity} ({order_type}), Time: {response_time}ms")
             
             # Small pause to not overload
-            time.sleep(0.1)
+            time.sleep(0.025)
         
         # Write entire batch together to CSV
         with open(output_csv, 'a', encoding='utf-8', newline='') as csvfile:
