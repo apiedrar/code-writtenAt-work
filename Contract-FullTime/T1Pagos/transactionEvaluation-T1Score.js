@@ -7,30 +7,66 @@ const XLSX = require("xlsx");
 const { faker } = require("@faker-js/faker");
 require("dotenv").config();
 
+// Parse command-line arguments
+function parseCliArgs() {
+  const args = process.argv.slice(2);
+  const options = {};
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--input" || args[i] === "-i") {
+      options.inputPath = args[i + 1];
+      i++; // Skip next argument as it's the value
+    } else if (args[i] === "--output" || args[i] === "-o") {
+      options.outputPath = args[i + 1];
+      i++; // Skip next argument as it's the value
+    } else if (args[i] === "--help" || args[i] === "-h") {
+      console.log(`
+Usage: node transactionEvaluation-T1Score.js [OPTIONS]
+
+Options:
+  -i, --input   <path>    Path to input Excel file
+  -o, --output  <path>    Path to output Excel file
+  -h, --help              Show this help message
+
+Examples:
+  node transactionEvaluation-T1Score.js
+  node transactionEvaluation-T1Score.js --input ./data/input.xlsx --output ./results/output.xlsx
+  node transactionEvaluation-T1Score.js -i /path/to/input.xlsx -o /path/to/output.xlsx
+      `);
+      process.exit(0);
+    }
+  }
+
+  return options;
+}
+
 // Configuration
-const originacionKey = process.env.Originacion_ClaroScore;
-const hiddenUrl = process.env.originacion_api_url;
+const apiKey = process.env.transactionEvaluation_APIKey;
+const hiddenUrl = process.env.transactionEvaluation_URL;
 const timestamp = new Date()
   .toISOString()
   .replace(/[-:]/g, "")
   .replace("T", "_")
   .split(".")[0];
 
-// File paths
-const DATA_XLSX_PATH = path.join(
-  os.homedir(),
-  "Downloads",
-  "Data_TransactionEvaluations-ClaroScore_Originacion-Prod.xlsx"
-);
-const OUTPUT_EXCEL = path.join(
-  os.homedir(),
-  "Downloads",
-  `Responses-TransactionEvaluation-${timestamp}.xlsx`
-);
+// Parse CLI arguments
+const cliOptions = parseCliArgs();
+
+// File paths - use CLI arguments or defaults
+const DATA_XLSX_PATH =
+  cliOptions.inputPath || path.join(os.homedir(), "Downloads", "Input.xlsx");
+
+const OUTPUT_EXCEL =
+  cliOptions.outputPath ||
+  path.join(
+    os.homedir(),
+    "Downloads",
+    `Responses-TransactionEvaluation-${timestamp}.xlsx`
+  );
 
 const headers = {
   "Content-Type": "application/json",
-  "x-api-key": originacionKey,
+  "x-api-key": apiKey,
 };
 
 /**
@@ -204,94 +240,7 @@ function generateConfigFromRow(rowData) {
 
   // If no config columns found, fall back to original static config
   if (Object.keys(config).length === 0) {
-    const defaultConfigKeys = [
-      "profile_idx",
-      "tch_adaptability_idx",
-      "ctbility_idx",
-      "bill_address_to_full_name_confidence",
-      "bill_address_to_last_name_confidence",
-      "bill_city_postal_match",
-      "billing_risk_country",
-      "card_category",
-      "card_type",
-      "company_name",
-      "customers_phone_in_billing_location",
-      "dis_description",
-      "domain_age",
-      "domain_category",
-      "domain_corporate",
-      "domain_country_code",
-      "domain_country_match",
-      "domain_creation_days",
-      "domain_exists",
-      "domain_name",
-      "domain_relevant_info",
-      "domain_risk",
-      "domain_risk_level",
-      "ea_advice",
-      "ea_reason",
-      "ea_reason_id",
-      "ea_risk_band_id",
-      "ea_score",
-      "email_age",
-      "email_creation_days",
-      "email_exists",
-      "email_owner",
-      "email_to_bill_address_confidence",
-      "email_to_full_name_confidence",
-      "email_to_ip_confidence",
-      "email_to_last_name_confidence",
-      "email_to_phone_confidence",
-      "email_to_ship_address_confidence",
-      "ip_proxy_type",
-      "ip_reputation",
-      "last_consultation",
-      "phone_name_match",
-      "phone_owner",
-      "phone_status",
-      "phone_to_bill_address_confidence",
-      "phone_to_full_name_confidence",
-      "phone_to_last_name_confidence",
-      "phone_to_ship_address_confidence",
-      "ship_city_postal_match",
-      "ship_forward",
-      "sm_friends",
-      "source_industry",
-      "status",
-      "u_hits",
-      "title",
-      "cp",
-      "rfc",
-      "calle",
-      "ciudad",
-      "estado",
-      "genero",
-      "nombre",
-      "colonia",
-      "materno",
-      "paterno",
-      "actividad",
-      "antigplan",
-      "fecha_nac",
-      "domiciliado",
-      "lim_credito",
-      "suscripcion",
-      "match_nombre",
-      "estatus_linea",
-      "match_materno",
-      "match_paterno",
-      "nivel_recarga",
-      "rango_consumo",
-      "red_contactos",
-      "score_wcredito",
-      "tiposuscripcion",
-      "antiguedad_linea",
-      "cadencia_recarga",
-      "nivel_cambio_sim",
-      "score_fraude_gen",
-      "score_riesgo_gen",
-      "tendencia_consumo",
-    ];
+    const defaultConfigKeys = [];
 
     defaultConfigKeys.forEach((key) => {
       config[key] = true;
@@ -424,6 +373,11 @@ async function main() {
     "🚀 Starting ClaroScore Originación API Test with Dynamic Config"
   );
   console.log("=".repeat(60));
+
+  // Display file paths being used
+  console.log(`📁 Input file: ${DATA_XLSX_PATH}`);
+  console.log(`📁 Output file: ${OUTPUT_EXCEL}`);
+  console.log("-".repeat(30));
 
   // Load email, phone data, and config columns from Excel file
   const dataRecords = loadData();

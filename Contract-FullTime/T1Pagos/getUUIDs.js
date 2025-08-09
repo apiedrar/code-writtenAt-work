@@ -6,7 +6,7 @@ const XLSX = require("xlsx");
 require("dotenv").config();
 
 // Environment variables
-const apiToken = process.env.SearsAdmin_Token;
+const apiToken = process.env.MercAdmin_Token; // Update "Merc" to the specific merchant's name, or assign the variable to the correct value in your .env file
 const hiddenUrl = process.env.externalId_URL;
 
 /**
@@ -202,25 +202,203 @@ function readCsvFile(filePath) {
   });
 }
 
+/**
+ * Parse command line arguments
+ * @returns {Object} Parsed arguments
+ */
+function parseArguments() {
+  const args = process.argv.slice(2);
+  const parsedArgs = {
+    input: null,
+    output: null,
+    idColumn: "Id Externo",
+    merchant: "Merc",
+    help: false,
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    const nextArg = args[i + 1];
+
+    switch (arg) {
+      case "-i":
+      case "--input":
+        if (nextArg && !nextArg.startsWith("-")) {
+          parsedArgs.input = nextArg;
+          i++; // Skip next argument as it's the value
+        }
+        break;
+      case "-o":
+      case "--output":
+        if (nextArg && !nextArg.startsWith("-")) {
+          parsedArgs.output = nextArg;
+          i++; // Skip next argument as it's the value
+        }
+        break;
+      case "-c":
+      case "--id-column":
+        if (nextArg && !nextArg.startsWith("-")) {
+          parsedArgs.idColumn = nextArg;
+          i++; // Skip next argument as it's the value
+        }
+        break;
+      case "-m":
+      case "--merchant":
+        if (nextArg && !nextArg.startsWith("-")) {
+          parsedArgs.merchant = nextArg;
+          i++; // Skip next argument as it's the value
+        }
+        break;
+      case "-h":
+      case "--help":
+        parsedArgs.help = true;
+        break;
+      default:
+        console.warn(`Unknown argument: ${arg}`);
+    }
+  }
+
+  return parsedArgs;
+}
+
+/**
+ * Display help information
+ */
+function displayHelp() {
+  console.log(`
+Usage: node getUUIDs.js [options]
+
+Options:
+  -i, --input <path>        Path to input CSV file
+  -o, --output <path>       Path to output Excel file
+  -c, --id-column <name>    Name of the ID column in CSV (default: "Id Externo")
+  -m, --merchant <name>     Merchant name for default file naming (default: "Merc")
+  -h, --help                Display this help message
+
+Examples:
+  # Use default file locations with merchant name
+  node getUUIDs.js
+
+  # Specify custom input and output files
+  node getUUIDs.js -i /path/to/input.csv -o /path/to/output.xlsx
+
+  # Use custom ID column name
+  node getUUIDs.js -i input.csv -c "External_ID"
+
+  # Combine multiple options
+  node getUUIDs.js -i data.csv -o results.xlsx -m "MyMerchant" -c "TransactionID"
+
+Default behavior (no arguments):
+  - Input: ~/Downloads/IdTrx-Merc-YYYYMMDD.csv
+  - Output: ~/Downloads/UUIDs-Merc-{timestamp}.xlsx
+  - ID Column: "Id Externo"
+  - Merchant: "Merc"
+`);
+}
+
+/**
+ * Generate default file paths based on merchant name
+ * @param {string} merchant - Merchant name
+ * @returns {Object} Object with inputFile and outputFile paths
+ */
+function generateDefaultPaths(merchant) {
+  const downloadsPath = process.env.HOME || process.env.USERPROFILE;
+  const inputFile = path.join(
+    downloadsPath,
+    "Downloads",
+    `IdTrx-${merchant}-20250704.csv`
+  );
+
+  const timestamp =
+    new Date().toISOString().replace(/[-T:]/g, "").split(".")[0] +
+    String(new Date().getMonth() + 1).padStart(2, "0");
+  const outputFile = path.join(
+    downloadsPath,
+    "Downloads",
+    `UUIDs-${merchant}-${timestamp}.xlsx`
+  );
+
+  return { inputFile, outputFile };
+}
+
+/**
+ * Validate file paths and arguments
+ * @param {Object} args - Parsed arguments
+ * @returns {Object} Validated file paths
+ */
+function validateAndPreparePaths(args) {
+  let inputFile, outputFile;
+
+  // Handle input file
+  if (args.input) {
+    inputFile = path.resolve(args.input);
+    if (!fs.existsSync(inputFile)) {
+      throw new Error(`Input file does not exist: ${inputFile}`);
+    }
+  } else {
+    // Use default path
+    const defaultPaths = generateDefaultPaths(args.merchant);
+    inputFile = defaultPaths.inputFile;
+    if (!fs.existsSync(inputFile)) {
+      throw new Error(
+        `Default input file does not exist: ${inputFile}. Please specify input file with -i option.`
+      );
+    }
+  }
+
+  // Handle output file
+  if (args.output) {
+    outputFile = path.resolve(args.output);
+    // Ensure output directory exists
+    const outputDir = path.dirname(outputFile);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+  } else {
+    // Use default path
+    const defaultPaths = generateDefaultPaths(args.merchant);
+    outputFile = defaultPaths.outputFile;
+    // Ensure output directory exists
+    const outputDir = path.dirname(outputFile);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+  }
+
+  return { inputFile, outputFile };
+}
+
 // Main execution
 async function main() {
   try {
-    // Configuration - update these values as needed
-    const inputCsvFile = path.join(
-      process.env.HOME || process.env.USERPROFILE,
-      "Downloads",
-      "IdTrx-Sears-20250704.csv"
-    );
-    const timestamp =
-      new Date().toISOString().replace(/[-T:]/g, "").split(".")[0] +
-      String(new Date().getMonth() + 1).padStart(2, "0");
-    const outputExcelFile = path.join(
-      process.env.HOME || process.env.USERPROFILE,
-      "Downloads",
-      `UUIDs-Sears-${timestamp}.xlsx`
-    );
+    // Parse command line arguments
+    const args = parseArguments();
 
-    // API endpoint - choose the one you need
+    // Display help if requested
+    if (args.help) {
+      displayHelp();
+      return;
+    }
+
+    console.log("Starting UUID extraction process...");
+    console.log(`Merchant: ${args.merchant}`);
+    console.log(`ID Column: ${args.idColumn}`);
+
+    // Validate and prepare file paths
+    const { inputFile, outputFile } = validateAndPreparePaths(args);
+
+    console.log(`Input file: ${inputFile}`);
+    console.log(`Output file: ${outputFile}`);
+
+    // Verify environment variables
+    if (!apiToken) {
+      throw new Error("MercAdmin_Token environment variable is not set");
+    }
+    if (!hiddenUrl) {
+      throw new Error("externalId_URL environment variable is not set");
+    }
+
+    // API endpoint
     const urlTemplate = hiddenUrl;
 
     // Headers with authorization token
@@ -259,23 +437,33 @@ async function main() {
 
     // Run the combined function
     await apiRequestWithExtraction(
-      inputCsvFile,
-      outputExcelFile,
+      inputFile,
+      outputFile,
       urlTemplate,
-      "Id Externo",
+      args.idColumn,
       headers,
       keysToExtract,
       columnMapping
     );
+
+    console.log("Process completed successfully!");
   } catch (error) {
     console.error(`Main execution error: ${error.message}`);
+    process.exit(1);
   }
 }
 
-// Run the main function
+// Run the main function only if this script is executed directly
 if (require.main === module) {
-  main().catch(console.error);
+  main().catch((error) => {
+    console.error(`Unhandled error: ${error.message}`);
+    process.exit(1);
+  });
 }
 
 // Export the function for use as a module
-module.exports = { apiRequestWithExtraction };
+module.exports = {
+  apiRequestWithExtraction,
+  parseArguments,
+  generateDefaultPaths,
+};

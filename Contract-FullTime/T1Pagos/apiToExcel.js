@@ -57,7 +57,7 @@ async function apiRequestWithExtraction(
   }
 
   // Request configuration
-  const REQUEST_DELAY = 50; // Delay between requests in milliseconds
+  const REQUEST_DELAY = 25; // Delay between requests in milliseconds
 
   // List to store all extracted data
   const extractedData = [];
@@ -200,24 +200,91 @@ function readCsv(filePath) {
   });
 }
 
+/**
+ * Display usage information
+ */
+function displayUsage() {
+  console.log(`
+Usage: node ${path.basename(__filename)} <inputCsvFile> [outputExcelFile]
+
+Arguments:
+  inputCsvFile     Required. Path to the input CSV file containing UUIDs
+  outputExcelFile  Optional. Path for the output Excel file. 
+                   If not provided, will be generated automatically in the same directory as input file
+
+Examples:
+  node ${path.basename(__filename)} ./data/input.csv
+  node ${path.basename(__filename)} ./data/input.csv ./output/result.xlsx
+  node ${path.basename(__filename)} "/path/to/Query-Merc-20250807.csv"
+  node ${path.basename(
+    __filename
+  )} "/path/to/input.csv" "/path/to/ExtractRes-Merc.xlsx"
+  `);
+}
+
 // Main execution
 async function main() {
-  // Configuration - update these values as needed
-  const inputCsvFile = path.join(
-    require("os").homedir(),
-    "Downloads",
-    "Query-RyP-20250807.csv"
-  );
-  const timestamp = new Date()
-    .toISOString()
-    .replace(/[-:]/g, "")
-    .replace(/\..+/, "")
-    .replace("T", "-");
-  const outputExcelFile = path.join(
-    require("os").homedir(),
-    "Downloads",
-    `ExtractRes-RyP-${timestamp}.xlsx`
-  );
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+
+  // Check if help is requested
+  if (args.includes("-h") || args.includes("--help") || args.length === 0) {
+    displayUsage();
+    return;
+  }
+
+  // Validate arguments
+  if (args.length < 1) {
+    console.error("Error: Input CSV file path is required");
+    displayUsage();
+    process.exit(1);
+  }
+
+  const inputCsvFile = args[0];
+
+  // Check if input file exists
+  if (!fs.existsSync(inputCsvFile)) {
+    console.error(`Error: Input file '${inputCsvFile}' does not exist`);
+    process.exit(1);
+  }
+
+  // Generate output file path if not provided
+  let outputExcelFile;
+  if (args.length >= 2) {
+    outputExcelFile = args[1];
+  } else {
+    // Auto-generate output file name in the same directory as input
+    const inputDir = path.dirname(inputCsvFile);
+    const inputBasename = path.basename(
+      inputCsvFile,
+      path.extname(inputCsvFile)
+    );
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:]/g, "")
+      .replace(/\..+/, "")
+      .replace("T", "-");
+    outputExcelFile = path.join(
+      inputDir,
+      `ExtractRes-${inputBasename}-${timestamp}.xlsx`
+    );
+  }
+
+  // Ensure output directory exists
+  const outputDir = path.dirname(outputExcelFile);
+  if (!fs.existsSync(outputDir)) {
+    try {
+      fs.mkdirSync(outputDir, { recursive: true });
+    } catch (error) {
+      console.error(
+        `Error creating output directory '${outputDir}': ${error.message}`
+      );
+      process.exit(1);
+    }
+  }
+
+  console.log(`Input CSV file: ${inputCsvFile}`);
+  console.log(`Output Excel file: ${outputExcelFile}`);
 
   // API endpoint
   const urlTemplate = hiddenUrl;

@@ -235,46 +235,133 @@ function readCsvFile(filePath) {
   });
 }
 
+/**
+ * Display usage information
+ */
+function displayUsage() {
+  console.log(`
+Usage: node ${path.basename(__filename)} <inputCsvFile> [outputExcelFile]
+
+Arguments:
+  inputCsvFile     Required. Path to the input CSV file containing cargo IDs and amounts
+                   Must contain columns: 'idCargo' and 'montoTotal'
+  outputExcelFile  Optional. Path for the output Excel file. 
+                   If not provided, will be generated automatically in the same directory as input file
+
+Examples:
+  node ${path.basename(__filename)} ./data/refunds.csv
+  node ${path.basename(__filename)} ./data/refunds.csv ./output/results.xlsx
+  node ${path.basename(__filename)} "/path/to/RyP-Refund-20250803.csv"
+  node ${path.basename(
+    __filename
+  )} "/path/to/input.csv" "/path/to/RefundResults.xlsx"
+
+Required CSV Columns:
+  - idCargo: The cargo ID for the refund request
+  - montoTotal: The refund amount
+
+Environment Variables Required:
+  - api_token: Your API authorization token
+  - APIrefundBaseURL: The base URL for the refund API
+  `);
+}
+
 // Main execution
 async function main() {
-  try {
-    // Configuration - update these values as needed
-    const inputCsvFile = path.join(
-      process.env.HOME || process.env.USERPROFILE,
-      "Downloads",
-      "RyP-Refund-20250803.csv"
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+
+  // Check if help is requested
+  if (args.includes("-h") || args.includes("--help") || args.length === 0) {
+    displayUsage();
+    return;
+  }
+
+  // Validate arguments
+  if (args.length < 1) {
+    console.error("Error: Input CSV file path is required");
+    displayUsage();
+    process.exit(1);
+  }
+
+  const inputCsvFile = args[0];
+
+  // Check if input file exists
+  if (!fs.existsSync(inputCsvFile)) {
+    console.error(`Error: Input file '${inputCsvFile}' does not exist`);
+    process.exit(1);
+  }
+
+  // Generate output file path if not provided
+  let outputExcelFile;
+  if (args.length >= 2) {
+    outputExcelFile = args[1];
+  } else {
+    // Auto-generate output file name in the same directory as input
+    const inputDir = path.dirname(inputCsvFile);
+    const inputBasename = path.basename(
+      inputCsvFile,
+      path.extname(inputCsvFile)
     );
     const timestamp = new Date()
       .toISOString()
       .replace(/[-T:]/g, "")
       .split(".")[0];
-    const outputExcelFile = path.join(
-      process.env.HOME || process.env.USERPROFILE,
-      "Downloads",
-      `Results-RyP-Refund-${timestamp}.xlsx`
+    outputExcelFile = path.join(
+      inputDir,
+      `RefundResults-${inputBasename}-${timestamp}.xlsx`
     );
-
-    // Headers with authorization token
-    const headers = {
-      Authorization: `Bearer ${apiToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Run the refund function
-    await apiRefundRequests(
-      inputCsvFile,
-      outputExcelFile,
-      baseUrl,
-      "idCargo", // Change this if your CSV column has a different name
-      "montoTotal", // Change this if your CSV column has a different name
-      headers
-    );
-  } catch (error) {
-    console.error(`Main execution error: ${error.message}`);
   }
+
+  // Ensure output directory exists
+  const outputDir = path.dirname(outputExcelFile);
+  if (!fs.existsSync(outputDir)) {
+    try {
+      fs.mkdirSync(outputDir, { recursive: true });
+    } catch (error) {
+      console.error(
+        `Error creating output directory '${outputDir}': ${error.message}`
+      );
+      process.exit(1);
+    }
+  }
+
+  // Check for required environment variables
+  if (!apiToken) {
+    console.error(
+      "Error: API token not found. Make sure api_token is set in your .env file"
+    );
+    process.exit(1);
+  }
+
+  if (!baseUrl) {
+    console.error(
+      "Error: API base URL not found. Make sure APIrefundBaseURL is set in your .env file"
+    );
+    process.exit(1);
+  }
+
+  console.log(`Input CSV file: ${inputCsvFile}`);
+  console.log(`Output Excel file: ${outputExcelFile}`);
+
+  // Headers with authorization token
+  const headers = {
+    Authorization: `Bearer ${apiToken}`,
+    "Content-Type": "application/json",
+  };
+
+  // Run the refund function
+  await apiRefundRequests(
+    inputCsvFile,
+    outputExcelFile,
+    baseUrl,
+    "idCargo", // Change this if your CSV column has a different name
+    "montoTotal", // Change this if your CSV column has a different name
+    headers
+  );
 }
 
-// Run the main function
+// Execute main function if this file is run directly
 if (require.main === module) {
   main().catch(console.error);
 }

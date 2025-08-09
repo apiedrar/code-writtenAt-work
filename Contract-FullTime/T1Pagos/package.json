@@ -1,6 +1,6 @@
 {
   "name": "api-scripts",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Handle API data based on CSV IDs and save to Excel",
   "main": "apiToExcel.js",
   "scripts": {
