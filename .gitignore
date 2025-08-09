@@ -1,16 +1,30 @@
 # Files
-Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/V2dm-testing.py
 *.env
 *.xlsx
+*.DS_Store
 
 # Directories
-
 node_modules
 
 # Cybersource REST Samples
+
 # Authorization
 Configuration.py
 Configuration.bak
+
+# Directories
+Contract-FullTime/cybersource-rest-samples-python/samples/*
+
+!Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/
+!Contract-FullTime/cybersource-rest-samples-python/samples/FlexMicroform/
+!Contract-FullTime/cybersource-rest-samples-python/samples/networkToken/
+!Contract-FullTime/cybersource-rest-samples-python/samples/PayerAuthentication/
+!Contract-FullTime/cybersource-rest-samples-python/samples/Payments/
+!Contract-FullTime/cybersource-rest-samples-python/samples/RecurringBillingSubscriptions/
+
+# Files
+Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/V2dm-testing.py
+Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/Example_request.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

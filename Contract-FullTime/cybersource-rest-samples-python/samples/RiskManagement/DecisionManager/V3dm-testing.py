@@ -224,7 +224,7 @@ def process_in_batches(rows, output_csv, fieldnames, batch_size=50):
             print(f"Transaction {row_index+1}/{total_rows}: Status {status}, Email: {email}, Quantity: {quantity} ({order_type}), Time: {response_time}ms")
             
             # Small pause to not overload
-            time.sleep(0.025)
+            time.sleep(0.2)
         
         # Write entire batch together to CSV
         with open(output_csv, 'a', encoding='utf-8', newline='') as csvfile:

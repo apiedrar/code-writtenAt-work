@@ -12,12 +12,12 @@ const hiddenUrl = process.env.APISync_URL;
 const inputCsvFile = path.join(
   process.env.HOME || process.env.USERPROFILE,
   "Downloads",
-  "Sync-RyP-20250806.csv"
+  "Sync-RyP-20250807.csv"
 );
 const outputCsvFile = path.join(
   process.env.HOME || process.env.USERPROFILE,
   "Downloads",
-  "SyncResponses-RyP-20250806.csv"
+  "SyncResponses-RyP-20250807.csv"
 );
 
 // Headers for API requests
