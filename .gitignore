@@ -2,6 +2,7 @@
 *.env
 *.xlsx
 *.DS_Store
+PythonScripts/extraer_info.py
 
 # Directories
 node_modules

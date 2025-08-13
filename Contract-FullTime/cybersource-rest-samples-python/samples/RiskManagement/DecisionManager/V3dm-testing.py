@@ -118,7 +118,7 @@ def process_transaction(row, api_instance):
         )
         
         orderInformationBillTo = Riskv1decisionsOrderInformationBillTo(
-            address1=str(row.get('address_number', '')) + ' ' + str(row.get('address_street', '')),
+            address1=str(row.get('address1', '')),
             administrative_area=row.get('address_state', ''),
             country=row.get('address_country', ''),
             locality=row.get('address_city', ''),
@@ -191,7 +191,7 @@ def process_transaction(row, api_instance):
         traceback.print_exc()
         return 999, str(e), 0
 
-def process_in_batches(rows, output_csv, fieldnames, batch_size=50):
+def process_in_batches(rows, output_csv, fieldnames, batch_size=100):
     """Processes records in batches for better resource management"""
     total_rows = len(rows)
     
