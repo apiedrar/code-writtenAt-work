@@ -191,7 +191,7 @@ def process_transaction(row, api_instance):
         traceback.print_exc()
         return 999, str(e), 0
 
-def process_in_batches(rows, output_csv, fieldnames, batch_size=100):
+def process_in_batches(rows, output_csv, fieldnames, batch_size=100, delay=0.2):
     """Processes records in batches for better resource management"""
     total_rows = len(rows)
     
@@ -224,7 +224,7 @@ def process_in_batches(rows, output_csv, fieldnames, batch_size=100):
             print(f"Transaction {row_index+1}/{total_rows}: Status {status}, Email: {email}, Quantity: {quantity} ({order_type}), Time: {response_time}ms")
             
             # Small pause to not overload
-            time.sleep(0.2)
+            time.sleep(delay)
         
         # Write entire batch together to CSV
         with open(output_csv, 'a', encoding='utf-8', newline='') as csvfile:
@@ -262,7 +262,7 @@ def excel_to_csv_processor(input_excel, output_csv):
             writer.writeheader()
         
         # Process records in batches for better resource management
-        process_in_batches(rows, output_csv, fieldnames, batch_size=50)
+        process_in_batches(rows, output_csv, fieldnames, batch_size=100, delay=args.delay)
         
         print(f"Processing completed. Results saved to: {output_csv}")
         return True
@@ -279,6 +279,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process Excel file through CyberSource API')
     parser.add_argument('input_excel', help='Path to input Excel file')
     parser.add_argument('output_csv', help='Path to output CSV file')
+    parser.add_argument('--delay', type=float, default=0.2, help='Delay between API calls in seconds')
     
     # Parse arguments
     args = parser.parse_args()
