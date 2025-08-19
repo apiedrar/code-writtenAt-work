@@ -163,7 +163,7 @@ async function apiRequestWithExtraction(
       );
 
       // Also save raw responses for debugging or further processing
-      const rawOutputPath = path.join(
+      /*const rawOutputPath = path.join(
         path.dirname(outputExcelPath),
         path.basename(outputExcelPath, path.extname(outputExcelPath)) +
           "_raw.xlsx"
@@ -175,7 +175,7 @@ async function apiRequestWithExtraction(
       );
       XLSX.utils.book_append_sheet(rawWb, rawWs, "Raw Responses");
       XLSX.writeFile(rawWb, rawOutputPath);
-      console.log(`Raw responses saved to ${rawOutputPath} for reference`);
+      console.log(`Raw responses saved to ${rawOutputPath} for reference`);*/
     } catch (error) {
       console.log(`Error saving data to Excel: ${error.message}`);
     }
@@ -255,19 +255,12 @@ async function main() {
   } else {
     // Auto-generate output file name in the same directory as input
     const inputDir = path.dirname(inputCsvFile);
-    const inputBasename = path.basename(
-      inputCsvFile,
-      path.extname(inputCsvFile)
-    );
     const timestamp = new Date()
       .toISOString()
       .replace(/[-:]/g, "")
       .replace(/\..+/, "")
       .replace("T", "-");
-    outputExcelFile = path.join(
-      inputDir,
-      `ExtractRes-${inputBasename}-${timestamp}.xlsx`
-    );
+    outputExcelFile = path.join(inputDir, `APIData-${timestamp}.xlsx`);
   }
 
   // Ensure output directory exists
