@@ -57,7 +57,7 @@ async function apiRequestWithExtraction(
   }
 
   // Request configuration
-  const REQUEST_DELAY = 25; // Delay between requests in milliseconds
+  const REQUEST_DELAY = 200; // Delay between requests in milliseconds
 
   // List to store all extracted data
   const extractedData = [];
@@ -79,7 +79,7 @@ async function apiRequestWithExtraction(
     try {
       // Perform GET request
       const response = await axios.get(url, { headers });
-      // await new Promise(resolve => setTimeout(resolve, REQUEST_DELAY));
+      await new Promise((resolve) => setTimeout(resolve, REQUEST_DELAY));
 
       if (response.status === 200) {
         const data = response.data;
