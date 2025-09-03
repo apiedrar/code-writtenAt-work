@@ -153,6 +153,19 @@ def process_transaction(row, api_instance):
             "value": order_type
         })
 
+        # Add merchant defined data 3 field regardless if the row is empty or contains data (key "3")
+        merchant_defined_data3 = row.get('merchant_defined_data3', '')
+        # Handle None/NaN values by converting to string
+        if pd.isna(merchant_defined_data3) or merchant_defined_data3 is None:
+            merchant_defined_data3 = ""
+        else:
+            merchant_defined_data3 = str(merchant_defined_data3)
+        
+        merchantDefinedInfo.append({
+            "key": "3", 
+            "value": merchant_defined_data3
+        })
+
         orderInformation = Riskv1decisionsOrderInformation(
             amount_details=orderInformationAmountDetails.__dict__,
             ship_to=orderInformationShipTo.__dict__,

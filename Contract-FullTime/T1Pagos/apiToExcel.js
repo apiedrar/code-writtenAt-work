@@ -163,19 +163,19 @@ async function apiRequestWithExtraction(
       );
 
       // Also save raw responses for debugging or further processing
-      /*const rawOutputPath = path.join(
-        path.dirname(outputExcelPath),
-        path.basename(outputExcelPath, path.extname(outputExcelPath)) +
-          "_raw.xlsx"
-      );
+      // const rawOutputPath = path.join(
+      //   path.dirname(outputExcelPath),
+      //   path.basename(outputExcelPath, path.extname(outputExcelPath)) +
+      //     "_raw.xlsx"
+      // );
 
-      const rawWb = XLSX.utils.book_new();
-      const rawWs = XLSX.utils.json_to_sheet(
-        rawResponses.map((resp) => ({ raw_response: JSON.stringify(resp) }))
-      );
-      XLSX.utils.book_append_sheet(rawWb, rawWs, "Raw Responses");
-      XLSX.writeFile(rawWb, rawOutputPath);
-      console.log(`Raw responses saved to ${rawOutputPath} for reference`);*/
+      // const rawWb = XLSX.utils.book_new();
+      // const rawWs = XLSX.utils.json_to_sheet(
+      //   rawResponses.map((resp) => ({ raw_response: JSON.stringify(resp) }))
+      // );
+      // XLSX.utils.book_append_sheet(rawWb, rawWs, "Raw Responses");
+      // XLSX.writeFile(rawWb, rawOutputPath);
+      // console.log(`Raw responses saved to ${rawOutputPath} for reference`);
     } catch (error) {
       console.log(`Error saving data to Excel: ${error.message}`);
     }
@@ -320,6 +320,9 @@ async function main() {
     "data.transaccion.afiliacion_uuid",
     "data.transaccion.datos_procesador.numero_afiliacion",
     "data.transaccion.datos_procesador.procesador",
+    "data.transaccion.datos_procesador.conciliaciones[0].id",
+    "data.transaccion.datos_procesador.conciliaciones[0].fecha",
+    "data.transaccion.datos_procesador.conciliaciones[0].nombre_retorno",
     "data.transaccion.comercio_uuid",
     "data.transaccion.datos_claropagos.origin",
     "data.transaccion.datos_comercio.cliente.uuid",
@@ -368,6 +371,11 @@ async function main() {
     "data.transaccion.afiliacion_uuid": "Id Afiliacion",
     "data.transaccion.datos_procesador.numero_afiliacion": "Num Afiliacion",
     "data.transaccion.datos_procesador.procesador": "Procesador",
+    "data.transaccion.datos_procesador.conciliaciones[0].id": "Id Conciliacion",
+    "data.transaccion.datos_procesador.conciliaciones[0].fecha":
+      "Fecha Conciliacion",
+    "data.transaccion.datos_procesador.conciliaciones[0].nombre_retorno":
+      "Archivo de Conciliacion",
     "data.transaccion.comercio_uuid": "Id Comercio",
     "data.transaccion.datos_claropagos.origin": "Nombre Comercio",
     "data.transaccion.datos_comercio.cliente.uuid": "Id Cliente",
