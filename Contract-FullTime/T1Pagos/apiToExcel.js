@@ -9,25 +9,27 @@ const apiToken = process.env.api_token;
 const hiddenUrl = process.env.TransactionGET_BaseURL;
 
 /**
- * Make API requests based on IDs from a CSV file, extract specified key-value pairs,
+ * Make API requests based on IDs from a CSV or Excel file, extract specified key-value pairs,
  * and save the results directly to Excel.
  *
- * @param {string} inputCsvPath - Path to the input CSV file containing IDs
+ * @param {string} inputFilePath - Path to the input CSV or Excel file containing IDs
  * @param {string} outputExcelPath - Path where the output Excel file will be saved
  * @param {string} urlTemplate - API endpoint URL template (ID will be appended)
- * @param {string} idColumn - Name of the column in the CSV containing the IDs (default: 'uuid')
+ * @param {string} idColumn - Name of the column in the file containing the IDs (default: 'uuid')
  * @param {Object} headers - Headers for the API request including authorization
  * @param {Array} keysToExtract - List of keys to extract from the API response
  * @param {Object} columnMapping - Dictionary mapping original key paths to desired column names
+ * @param {string} sheetName - Name of the Excel sheet to read (default: first sheet)
  */
 async function apiRequestWithExtraction(
-  inputCsvPath,
+  inputFilePath,
   outputExcelPath,
   urlTemplate,
   idColumn = "uuid",
   headers = null,
   keysToExtract = null,
-  columnMapping = null
+  columnMapping = null,
+  sheetName = null
 ) {
   if (!headers) {
     headers = {
@@ -44,15 +46,15 @@ async function apiRequestWithExtraction(
     columnMapping = {};
   }
 
-  // Read IDs from the CSV file
+  // Read IDs from the CSV or Excel file
   let dfInput;
   try {
-    dfInput = await readCsv(inputCsvPath);
+    dfInput = await readInputFile(inputFilePath, sheetName);
     if (!dfInput.some((row) => row.hasOwnProperty(idColumn))) {
-      throw new Error(`Column '${idColumn}' not found in the input CSV file`);
+      throw new Error(`Column '${idColumn}' not found in the input file`);
     }
   } catch (error) {
-    console.log(`Error reading input CSV: ${error.message}`);
+    console.log(`Error reading input file: ${error.message}`);
     return;
   }
 
@@ -185,6 +187,28 @@ async function apiRequestWithExtraction(
 }
 
 /**
+ * Helper function to determine file type and read accordingly
+ * @param {string} filePath - Path to input file (CSV or Excel)
+ * @param {string} sheetName - Name of Excel sheet to read (optional)
+ * @returns {Promise<Array>} Array of objects representing file rows
+ */
+async function readInputFile(filePath, sheetName = null) {
+  const fileExtension = path.extname(filePath).toLowerCase();
+
+  if (fileExtension === ".csv") {
+    console.log("Reading CSV file...");
+    return await readCsv(filePath);
+  } else if (fileExtension === ".xlsx" || fileExtension === ".xls") {
+    console.log("Reading Excel file...");
+    return await readExcel(filePath, sheetName);
+  } else {
+    throw new Error(
+      `Unsupported file type: ${fileExtension}. Only .csv, .xlsx, and .xls files are supported.`
+    );
+  }
+}
+
+/**
  * Helper function to read CSV file and return array of objects
  * @param {string} filePath - Path to CSV file
  * @returns {Promise<Array>} Array of objects representing CSV rows
@@ -201,24 +225,99 @@ function readCsv(filePath) {
 }
 
 /**
+ * Helper function to read Excel file and return array of objects
+ * @param {string} filePath - Path to Excel file
+ * @param {string} sheetName - Name of the sheet to read (optional)
+ * @returns {Promise<Array>} Array of objects representing Excel rows
+ */
+function readExcel(filePath, sheetName = null) {
+  return new Promise((resolve, reject) => {
+    try {
+      // Read the Excel file
+      const workbook = XLSX.readFile(filePath);
+
+      // Get sheet name - use provided name or first sheet
+      let targetSheetName;
+      if (sheetName) {
+        if (!workbook.SheetNames.includes(sheetName)) {
+          throw new Error(
+            `Sheet '${sheetName}' not found. Available sheets: ${workbook.SheetNames.join(
+              ", "
+            )}`
+          );
+        }
+        targetSheetName = sheetName;
+      } else {
+        targetSheetName = workbook.SheetNames[0];
+      }
+
+      console.log(`Reading from sheet: ${targetSheetName}`);
+
+      // Get the worksheet
+      const worksheet = workbook.Sheets[targetSheetName];
+
+      // Convert to JSON
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      // Clean up the data - remove empty rows and trim whitespace from headers
+      const cleanedData = jsonData
+        .filter((row) => Object.keys(row).length > 0) // Remove completely empty rows
+        .map((row) => {
+          const cleanedRow = {};
+          for (const [key, value] of Object.entries(row)) {
+            // Trim whitespace from keys and convert to string for consistency
+            const cleanedKey = String(key).trim();
+            cleanedRow[cleanedKey] = value;
+          }
+          return cleanedRow;
+        });
+
+      resolve(cleanedData);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+/**
+ * Helper function to validate file type
+ * @param {string} filePath - Path to input file
+ * @returns {boolean} True if file type is supported
+ */
+function isValidFileType(filePath) {
+  const validExtensions = [".csv", ".xlsx", ".xls"];
+  const fileExtension = path.extname(filePath).toLowerCase();
+  return validExtensions.includes(fileExtension);
+}
+
+/**
  * Display usage information
  */
 function displayUsage() {
   console.log(`
-Usage: node ${path.basename(__filename)} <inputCsvFile> [outputExcelFile]
+Usage: node ${path.basename(
+    __filename
+  )} <inputFile> [outputExcelFile] [sheetName]
 
 Arguments:
-  inputCsvFile     Required. Path to the input CSV file containing UUIDs
+  inputFile        Required. Path to the input CSV or Excel file containing UUIDs
+                   Supported formats: .csv, .xlsx, .xls
   outputExcelFile  Optional. Path for the output Excel file. 
                    If not provided, will be generated automatically in the same directory as input file
+  sheetName        Optional. Name of the Excel sheet to read (only applies to Excel files).
+                   If not provided, the first sheet will be used.
 
 Examples:
   node ${path.basename(__filename)} ./data/input.csv
-  node ${path.basename(__filename)} ./data/input.csv ./output/result.xlsx
+  node ${path.basename(__filename)} ./data/input.xlsx
+  node ${path.basename(__filename)} ./data/input.xlsx ./output/result.xlsx
+  node ${path.basename(
+    __filename
+  )} ./data/input.xlsx ./output/result.xlsx "Sheet1"
   node ${path.basename(__filename)} "/path/to/Query-Merc-20250807.csv"
   node ${path.basename(
     __filename
-  )} "/path/to/input.csv" "/path/to/ExtractRes-Merc.xlsx"
+  )} "/path/to/Query-Merc-20250807.xlsx" "/path/to/ExtractRes-Merc.xlsx" "Data"
   `);
 }
 
@@ -235,16 +334,25 @@ async function main() {
 
   // Validate arguments
   if (args.length < 1) {
-    console.error("Error: Input CSV file path is required");
+    console.error("Error: Input file path is required");
     displayUsage();
     process.exit(1);
   }
 
-  const inputCsvFile = args[0];
+  const inputFile = args[0];
 
   // Check if input file exists
-  if (!fs.existsSync(inputCsvFile)) {
-    console.error(`Error: Input file '${inputCsvFile}' does not exist`);
+  if (!fs.existsSync(inputFile)) {
+    console.error(`Error: Input file '${inputFile}' does not exist`);
+    process.exit(1);
+  }
+
+  // Validate file type
+  if (!isValidFileType(inputFile)) {
+    console.error(
+      `Error: Unsupported file type. Only .csv, .xlsx, and .xls files are supported.`
+    );
+    console.error(`Provided file: ${inputFile}`);
     process.exit(1);
   }
 
@@ -254,13 +362,21 @@ async function main() {
     outputExcelFile = args[1];
   } else {
     // Auto-generate output file name in the same directory as input
-    const inputDir = path.dirname(inputCsvFile);
+    const inputDir = path.dirname(inputFile);
     const timestamp = new Date()
       .toISOString()
       .replace(/[-:]/g, "")
       .replace(/\..+/, "")
       .replace("T", "-");
     outputExcelFile = path.join(inputDir, `APIData-${timestamp}.xlsx`);
+  }
+
+  // Get sheet name if provided (only relevant for Excel files)
+  const sheetName = args.length >= 3 ? args[2] : null;
+
+  // If sheet name is provided but input is CSV, show warning
+  if (sheetName && path.extname(inputFile).toLowerCase() === ".csv") {
+    console.warn("Warning: Sheet name parameter is ignored for CSV files");
   }
 
   // Ensure output directory exists
@@ -276,8 +392,11 @@ async function main() {
     }
   }
 
-  console.log(`Input CSV file: ${inputCsvFile}`);
+  console.log(`Input file: ${inputFile}`);
   console.log(`Output Excel file: ${outputExcelFile}`);
+  if (sheetName && path.extname(inputFile).toLowerCase() !== ".csv") {
+    console.log(`Target sheet: ${sheetName}`);
+  }
 
   // API endpoint
   const urlTemplate = hiddenUrl;
@@ -334,20 +453,20 @@ async function main() {
 
   // Define column mapping to simplify header names
   const columnMapping = {
-    "data.transaccion.uuid": "Id Transaccion",
-    "data.transaccion.estatus": "Estatus",
-    "data.transaccion.datos_claropagos.creacion": "Fecha y Hora",
+    "data.transaccion.uuid": "ID Transaccion",
+    "data.transaccion.estatus": "Estado de Operacion",
+    "data.transaccion.datos_claropagos.creacion": "Fecha",
     "data.transaccion.datos_procesador.capturas[0].respuesta.data.datetime":
       "Fecha Captura",
     "data.transaccion.datos_comercio.pedido.id_externo": "Id Externo/Pedido",
-    "data.transaccion.forma_pago": "Forma de Pago",
+    "data.transaccion.forma_pago": "Forma_Pago",
     "data.transaccion.datos_pago.nombre": "Nombre Tarjethabiente",
     "data.transaccion.datos_pago.pan": "Pan",
     "data.transaccion.datos_pago.marca": "Marca Tarjeta",
     "data.transaccion.monto": "Monto",
     "data.transaccion.moneda": "Moneda",
     "data.transaccion.pais": "Pais",
-    "data.transaccion.datos_procesador.data.all.data.orderId": "Orden",
+    "data.transaccion.datos_procesador.data.all.data.orderId": "ID Orden",
     "data.transaccion.datos_pago.plan_pagos.plan": "Tipo de plan de pagos",
     "data.transaccion.datos_pago.plan_pagos.diferido": "Diferimiento",
     "data.transaccion.datos_pago.plan_pagos.parcialidades": "Mensualidades",
@@ -357,7 +476,7 @@ async function main() {
     "data.transaccion.datos_antifraude.resultado": "Resultado Antifraude",
     "data.transaccion.datos_antifraude.procesador": "Procesador Antifraude",
     "data.transaccion.datos_procesador.data.all.data.numero_autorizacion":
-      "Codigo Autorizacion",
+      "Codigo de Autorizacion",
     "data.transaccion.datos_procesador.data.all.codigo":
       "Codigo de Respuesta Procesador",
     "data.transaccion.datos_procesador.data.all.tipo_transaccion":
@@ -389,13 +508,14 @@ async function main() {
 
   // Run the function
   await apiRequestWithExtraction(
-    inputCsvFile,
+    inputFile,
     outputExcelFile,
     urlTemplate,
     "uuid",
     headers,
     keysToExtract,
-    columnMapping
+    columnMapping,
+    sheetName
   );
 }
 

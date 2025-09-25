@@ -20,10 +20,6 @@ const FIXED_VALUES = {
 
 // Function to convert string to appropriate type
 function convertValue(key, value) {
-  if (key === "id") {
-    return value; // Skip id as it's not part of the payload
-  }
-
   // Handle various data types - preserving strings that should be strings
   if (
     [
@@ -124,7 +120,7 @@ Examples:
   )} "/path/to/input.csv" "/path/to/SendAbonoResponses.csv"
 
 Required CSV Columns:
-  - id: Identifier for tracking requests
+  - id: Identifier for tracking requests (now included in payload)
   - Payment fields like: monto, claveRastreo, conceptoPago, fechaOperacion, etc.
 
 Environment Variables Required:
@@ -171,13 +167,17 @@ async function processApiSendAbono(inputCsvFile, outputCsvFile) {
     for (let index = 0; index < rows.length; index++) {
       const row = rows[index];
 
-      // Create payload from row data
+      // Create payload from row data - now including ID as first field
       const payload = {};
 
-      // Convert types appropriately
+      // First, add the id field to ensure it's first in the payload
+      const idValue = row.id || "";
+      payload.id = convertValue("id", idValue);
+
+      // Convert types appropriately for all other fields
       for (const [key, value] of Object.entries(row)) {
         if (key === "id") {
-          continue; // Skip id as it's not part of the payload
+          continue; // Skip since we already added it first
         }
 
         payload[key] = convertValue(key, value);
@@ -186,19 +186,22 @@ async function processApiSendAbono(inputCsvFile, outputCsvFile) {
       // Apply fixed values, overriding any from the CSV
       Object.assign(payload, FIXED_VALUES);
 
-      // Get the ID for the request URL
-      const idValue = row.id || "";
       const requestUrl = hiddenUrl;
 
       console.log(`[${index + 1}/${totalRows}] Sending to URL: ${requestUrl}`);
       console.log(`Payload: ${JSON.stringify(payload, null, 2)}`);
 
       try {
-        const response = await axios.post(requestUrl, payload, { headers });
+        const response = await axios.post(requestUrl, payload, {
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
+          },
+        });
         const responseData = response.data || {};
 
         if (response.status === 200) {
-          responseData.id = idValue; // Add ID to response
+          responseData.original_id = idValue; // Keep original ID for tracking
           responseData.error = ""; // Empty column if no error is returned
           responseData.request_status = "success";
           responseData.status_code = response.status;
@@ -209,7 +212,7 @@ async function processApiSendAbono(inputCsvFile, outputCsvFile) {
             `Error on ID ${idValue}: ${response.status} - ${errorMessage}`
           );
           allData.push({
-            id: idValue,
+            original_id: idValue,
             error: errorMessage,
             request_status: "failed",
             status_code: response.status,
@@ -238,7 +241,7 @@ async function processApiSendAbono(inputCsvFile, outputCsvFile) {
         }
 
         allData.push({
-          id: idValue,
+          original_id: idValue,
           error: errorMessage,
           request_status: "failed",
           status_code: statusCode,

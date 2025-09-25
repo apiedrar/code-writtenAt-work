@@ -3,6 +3,7 @@
 *.xlsx
 *.DS_Store
 PythonScripts/extraer_info.py
+PythonScripts/rechazo_telcel.py
 
 # Directories
 node_modules
