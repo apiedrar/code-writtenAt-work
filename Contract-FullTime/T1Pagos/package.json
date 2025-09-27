@@ -12,7 +12,8 @@
     "refund": "node apiRefund.js",
     "uuids": "node getUUIDs.js",
     "stp": "node sendAbono.js",
-    "split": "node excelDocSplit.js"
+    "split": "node excelDocSplit.js",
+    "webhooks": "node apiWebhook.js"
   },
   "dependencies": {
     "@faker-js/faker": "^9.9.0",

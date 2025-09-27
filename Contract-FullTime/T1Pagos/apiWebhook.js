@@ -6,7 +6,7 @@ const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 require("dotenv").config();
 
 const apiToken = process.env.api_token;
-const hiddenUrl = process.env.APISync_URL;
+const hiddenUrl = process.env.Webhook_URL;
 
 // Headers for API requests
 const headers = {
@@ -65,7 +65,7 @@ async function processApiSync(inputCsvFile, outputCsvFile) {
         continue;
       }
 
-      const url = `${hiddenUrl}${idValue}`;
+      const url = `${hiddenUrl}${idValue}/sync`;
 
       console.log(`[${index + 1}/${totalIds}] Requesting URL: ${url}`);
 
