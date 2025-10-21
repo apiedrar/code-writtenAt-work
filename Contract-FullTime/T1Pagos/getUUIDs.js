@@ -6,7 +6,7 @@ const XLSX = require("xlsx");
 require("dotenv").config();
 
 // Environment variables
-const apiToken = process.env.MercAdmin_Token; // Update "Merc" to the specific merchant's name, or assign the variable to the correct value in your .env file
+const apiToken = process.env.claroPayAdmin_token; // Update "Merc" to the specific merchant's name, or assign the variable to the correct value in your .env file
 const hiddenUrl = process.env.externalId_URL;
 
 /**
@@ -424,8 +424,8 @@ async function main() {
     // Define column mapping to simplify header names
     // Format: 'original_key_path': 'desired_column_name'
     const columnMapping = {
-      "data.transaccion.cargo_id": "Id Transaccion",
-      "data.transaccion.monto": "Monto",
+      "data.transaccion.cargo_id": "idCargo",
+      "data.transaccion.monto": "montoTotal",
       "data.transaccion.afiliacion": "Id Afiliacion",
       "data.transaccion.autorizacion_id": "Autorizacion",
       "data.transaccion.conciliado": "¿Conciliado?",

@@ -5,8 +5,8 @@ const csv = require("csv-parser");
 const XLSX = require("xlsx");
 require("dotenv").config();
 
-const apiToken = process.env.api_token;
-const hiddenUrl = process.env.TransactionGET_BaseURL;
+const apiToken = process.env.claroPayAdmin_token;
+const hiddenUrl = process.env.custBase_URL;
 
 /**
  * Make API requests based on IDs from a CSV or Excel file, extract specified key-value pairs,
@@ -59,7 +59,7 @@ async function apiRequestWithExtraction(
   }
 
   // Request configuration
-  const REQUEST_DELAY = 200; // Delay between requests in milliseconds
+  const REQUEST_DELAY = 20; // Delay between requests in milliseconds
 
   // List to store all extracted data
   const extractedData = [];
@@ -74,7 +74,7 @@ async function apiRequestWithExtraction(
     const idValue = String(row[idColumn]);
 
     // Format URL with current ID
-    const url = `${urlTemplate}${idValue}`;
+    const url = `${urlTemplate}id_externo/${idValue}`;
 
     console.log(`[${index + 1}/${totalIds}] Requesting URL: ${url}`);
 
@@ -409,103 +409,20 @@ async function main() {
 
   // Keys to extract
   const keysToExtract = [
-    "data.transaccion.uuid",
-    "data.transaccion.estatus",
-    "data.transaccion.datos_claropagos.creacion",
-    "data.transaccion.datos_procesador.capturas[0].respuesta.data.datetime",
-    "data.transaccion.datos_comercio.pedido.id_externo",
-    "data.transaccion.forma_pago",
-    "data.transaccion.datos_pago.nombre",
-    "data.transaccion.datos_pago.pan",
-    "data.transaccion.datos_pago.marca",
-    "data.transaccion.monto",
-    "data.transaccion.moneda",
-    "data.transaccion.pais",
-    "data.transaccion.datos_procesador.data.all.data.orderId",
-    "data.transaccion.datos_pago.plan_pagos.plan",
-    "data.transaccion.datos_pago.plan_pagos.diferido",
-    "data.transaccion.datos_pago.plan_pagos.parcialidades",
-    "data.transaccion.datos_pago.plan_pagos.puntos",
-    "data.transaccion.origen",
-    "data.transaccion.operacion",
-    "data.transaccion.datos_antifraude.resultado",
-    "data.transaccion.datos_antifraude.tag_profile[0]",
-    "data.transaccion.datos_antifraude.procesador",
-    "data.transaccion.datos_procesador.data.all.data.numero_autorizacion",
-    "data.transaccion.datos_procesador.data.all.codigo",
-    "data.transaccion.datos_procesador.data.all.tipo_transaccion",
-    "data.transaccion.datos_procesador.data.codigo",
-    "data.transaccion.datos_procesador.data.mensaje",
-    "data.transaccion.datos_antifraude.datos_procesador[0].descripcion",
-    "data.transaccion.afiliacion_uuid",
-    "data.transaccion.datos_procesador.numero_afiliacion",
-    "data.transaccion.datos_procesador.procesador",
-    "data.transaccion.datos_procesador.conciliaciones[0].id",
-    "data.transaccion.datos_procesador.conciliaciones[0].fecha",
-    "data.transaccion.datos_procesador.conciliaciones[0].nombre_retorno",
-    "data.transaccion.comercio_uuid",
-    "data.transaccion.datos_claropagos.origin",
-    "data.transaccion.datos_comercio.cliente.uuid",
-    "data.transaccion.datos_comercio.cliente.direccion.telefono.numero",
-    "data.transaccion.datos_comercio.pedido.articulos[0].nombre_producto",
-    "data.transaccion.conciliado",
-    "data.transaccion.fecha_conciliacion",
+    "data.cliente.id",
+    "data.cliente.id_externo",
+    "data.cliente.estado",
+    "data.cliente.creacion",
+    "data.cliente.actualizacion",
   ];
 
   // Define column mapping to simplify header names
   const columnMapping = {
-    "data.transaccion.uuid": "ID Transaccion",
-    "data.transaccion.estatus": "Estado de Operacion",
-    "data.transaccion.datos_claropagos.creacion": "Fecha",
-    "data.transaccion.datos_procesador.capturas[0].respuesta.data.datetime":
-      "Fecha Captura",
-    "data.transaccion.datos_comercio.pedido.id_externo": "Id Externo/Pedido",
-    "data.transaccion.forma_pago": "Forma_Pago",
-    "data.transaccion.datos_pago.nombre": "Nombre Tarjethabiente",
-    "data.transaccion.datos_pago.pan": "Pan",
-    "data.transaccion.datos_pago.marca": "Marca Tarjeta",
-    "data.transaccion.monto": "Monto",
-    "data.transaccion.moneda": "Moneda",
-    "data.transaccion.pais": "Pais",
-    "data.transaccion.datos_procesador.data.all.data.orderId": "ID Orden",
-    "data.transaccion.datos_pago.plan_pagos.plan": "Tipo de plan de pagos",
-    "data.transaccion.datos_pago.plan_pagos.diferido": "Diferimiento",
-    "data.transaccion.datos_pago.plan_pagos.parcialidades": "Mensualidades",
-    "data.transaccion.datos_pago.plan_pagos.puntos": "Puntos",
-    "data.transaccion.origen": "Origen de Transaccion",
-    "data.transaccion.operacion": "Esquema",
-    "data.transaccion.datos_antifraude.resultado": "Resultado Antifraude",
-    "data.transaccion.datos_antifraude.tag_profile[0]": "Perfil",
-    "data.transaccion.datos_antifraude.procesador": "Procesador Antifraude",
-    "data.transaccion.datos_procesador.data.all.data.numero_autorizacion":
-      "Codigo de Autorizacion",
-    "data.transaccion.datos_procesador.data.all.codigo":
-      "Codigo de Respuesta Procesador",
-    "data.transaccion.datos_procesador.data.all.tipo_transaccion":
-      "Tipo de Operacion",
-    "data.transaccion.datos_procesador.data.codigo":
-      "Codigo de Respuesta Claropagos",
-    "data.transaccion.datos_procesador.data.mensaje":
-      "Mensaje de Respuesta Claropagos",
-    "data.transaccion.datos_antifraude.datos_procesador[0].descripcion":
-      "Mensaje de Respuesta Antifraude",
-    "data.transaccion.afiliacion_uuid": "Id Afiliacion",
-    "data.transaccion.datos_procesador.numero_afiliacion": "Num Afiliacion",
-    "data.transaccion.datos_procesador.procesador": "Procesador",
-    "data.transaccion.datos_procesador.conciliaciones[0].id": "Id Conciliacion",
-    "data.transaccion.datos_procesador.conciliaciones[0].fecha":
-      "Fecha Conciliacion",
-    "data.transaccion.datos_procesador.conciliaciones[0].nombre_retorno":
-      "Archivo de Conciliacion",
-    "data.transaccion.comercio_uuid": "Id Comercio",
-    "data.transaccion.datos_claropagos.origin": "Nombre Comercio",
-    "data.transaccion.datos_comercio.cliente.uuid": "Id Cliente",
-    "data.transaccion.datos_comercio.cliente.direccion.telefono.numero":
-      "Num Telf",
-    "data.transaccion.datos_comercio.pedido.articulos[0].nombre_producto":
-      "Id Producto",
-    "data.transaccion.conciliado": "Cargo Conciliado",
-    "data.transaccion.fecha_conciliacion": "Fecha Conciliacion",
+    "data.cliente.id": "ID T1",
+    "data.cliente.id_externo": "ID Comercio",
+    "data.cliente.estado": "Estado",
+    "data.cliente.creacion": "Fecha Creacion",
+    "data.cliente.actualizacion": "Fecha Update",
   };
 
   // Run the function

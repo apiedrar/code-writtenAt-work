@@ -4,16 +4,18 @@
   "description": "Handle API data based on CSV IDs and save to Excel",
   "main": "apiToExcel.js",
   "scripts": {
-    "start": "node apiToExcel.js",
-    "evaluate": "node transactionEvaluation-T1Score.js",
-    "verify": "node verify-T1Score.js",
-    "sync": "node apiSync.js",
-    "cancel": "node apiCancel.js",
-    "refund": "node apiRefund.js",
-    "uuids": "node getUUIDs.js",
+    "pay-report": "node apiToExcel.js",
+    "fraud-screen": "node transactionEvaluation-T1Score.js",
+    "fraud-verify": "node verify-T1Score.js",
+    "pay-sync": "node apiSync.js",
+    "pay-cancel": "node apiCancel.js",
+    "pay-refund": "node apiRefund.js",
+    "order-uuids": "node getUUIDs.js",
     "stp": "node sendAbono.js",
-    "split": "node excelDocSplit.js",
-    "webhooks": "node apiWebhook.js"
+    "db-split": "node excelDocSplit.js",
+    "pay-webhooks": "node apiWebhook.js",
+    "customer-id": "node custUUID.js",
+    "delete-customer": "node custDel.js"
   },
   "dependencies": {
     "@faker-js/faker": "^9.9.0",
