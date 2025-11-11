@@ -4,6 +4,7 @@
 *.DS_Store
 PythonScripts/extraer_info.py
 PythonScripts/rechazo_telcel.py
+PythonScripts/extraer.py
 
 # Directories
 node_modules
@@ -27,6 +28,7 @@ Contract-FullTime/cybersource-rest-samples-python/samples/*
 # Files
 Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/V2dm-testing.py
 Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/Example_request.json
+Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/dm-karyworld_*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

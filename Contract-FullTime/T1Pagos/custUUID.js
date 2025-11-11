@@ -5,7 +5,7 @@ const csv = require("csv-parser");
 const XLSX = require("xlsx");
 require("dotenv").config();
 
-const apiToken = process.env.claroPayAdmin_token;
+const apiToken = process.env.T1WalletAdmin_Token;
 const hiddenUrl = process.env.custBase_URL;
 
 /**
@@ -74,7 +74,7 @@ async function apiRequestWithExtraction(
     const idValue = String(row[idColumn]);
 
     // Format URL with current ID
-    const url = `${urlTemplate}id_externo/${idValue}`;
+    const url = `${urlTemplate}${idValue}`;
 
     console.log(`[${index + 1}/${totalIds}] Requesting URL: ${url}`);
 

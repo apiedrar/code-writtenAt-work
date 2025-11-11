@@ -431,7 +431,7 @@ async function main() {
     "data.transaccion.datos_antifraude.resultado",
     "data.transaccion.datos_antifraude.tag_profile[0]",
     "data.transaccion.datos_antifraude.procesador",
-    "data.transaccion.datos_procesador.data.all.data.numero_autorizacion",
+    "data.transaccion.datos_procesador.data.all.data.data.numero_autorizacion",
     "data.transaccion.datos_procesador.data.all.codigo",
     "data.transaccion.datos_procesador.data.all.tipo_transaccion",
     "data.transaccion.datos_procesador.data.codigo",
@@ -450,6 +450,10 @@ async function main() {
     "data.transaccion.datos_comercio.pedido.articulos[0].nombre_producto",
     "data.transaccion.conciliado",
     "data.transaccion.fecha_conciliacion",
+    "http_code",
+    "data.transaccion.datos_antifraude.datos_procesador[0].data.afsReply.cardScheme",
+    "data.transaccion.datos_procesador.data.all.data.authNum",
+    "data.transaccion.datos_comercio.cliente.id_externo",
   ];
 
   // Define column mapping to simplify header names
@@ -477,7 +481,7 @@ async function main() {
     "data.transaccion.datos_antifraude.resultado": "Resultado Antifraude",
     "data.transaccion.datos_antifraude.tag_profile[0]": "Perfil",
     "data.transaccion.datos_antifraude.procesador": "Procesador Antifraude",
-    "data.transaccion.datos_procesador.data.all.data.numero_autorizacion":
+    "data.transaccion.datos_procesador.data.all.data.data.numero_autorizacion":
       "Codigo de Autorizacion",
     "data.transaccion.datos_procesador.data.all.codigo":
       "Codigo de Respuesta Procesador",
@@ -506,6 +510,12 @@ async function main() {
       "Id Producto",
     "data.transaccion.conciliado": "Cargo Conciliado",
     "data.transaccion.fecha_conciliacion": "Fecha Conciliacion",
+    http_code: "http code",
+    "data.transaccion.datos_antifraude.datos_procesador[0].data.afsReply.cardScheme":
+      "Tipo Tarjeta",
+    "data.transaccion.datos_procesador.data.all.data.authNum":
+      "Codigo de Autorizacion CYBS Amex",
+    "data.transaccion.datos_comercio.cliente.id_externo": "Identity ID",
   };
 
   // Run the function
