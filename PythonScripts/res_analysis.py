@@ -6,121 +6,115 @@ import argparse
 
 def main():
     # ========================
-    # ARGUMENTOS DE LÍNEA DE COMANDOS
+    # COMMAND LINE ARGUMENTS
     # ========================
     parser = argparse.ArgumentParser(
-        description="Procesar archivos de respuestas y transacciones Telcel"
+        description="Process Telcel's Response messages and Transactions files"
     )
-    parser.add_argument("respuestas", help="Ruta al archivo de respuestas (.xlsx)")
-    parser.add_argument(
-        "transacciones", help="Ruta al archivo de transacciones (.xlsx)"
-    )
-    parser.add_argument("salida", help="Ruta del archivo de salida (.xlsx)")
+    parser.add_argument("responses", help="Path to responses file (.xlsx)")
+    parser.add_argument("transactions", help="Path to transactions file (.xlsx)")
+    parser.add_argument("output", help="Path to output file (.xlsx)")
 
     args = parser.parse_args()
 
     # ========================
-    # ARCHIVOS
+    # FILES
     # ========================
-    file_respuestas = args.respuestas
-    file_transacciones = args.transacciones
-    file_salida = args.salida
+    responses_file = args.responses
+    transactions_file = args.transactions
+    output_file = args.output
 
-    # Columnas
-    col_tel_resp = "Telefono"
-    col_resp = "Mensaje"
-    col_fecha_resp = "Fecha"
-    col_tel_trans = "Telefono"
-    col_trans = "No. Externo/Pedido"
+    # Columns
+    res_phone_col = "Telefono"
+    res_col = "Mensaje"
+    res_date_col = "Fecha"
+    trx_phone_col = "Telefono"
+    trx_col = "No. Externo/Pedido"
 
     # ========================
-    # VERIFICAR QUE LOS ARCHIVOS EXISTEN
+    # FILES IN PATH VALIDATION
     # ========================
-    if not os.path.exists(file_respuestas):
-        print(f"❌ Error: No se encuentra el archivo de respuestas: {file_respuestas}")
+    if not os.path.exists(responses_file):
+        print(f"❌ Error: Responses file not found: {responses_file}")
         sys.exit(1)
 
-    if not os.path.exists(file_transacciones):
-        print(
-            f"❌ Error: No se encuentra el archivo de transacciones: {file_transacciones}"
-        )
+    if not os.path.exists(transactions_file):
+        print(f"❌ Error: Transactions file not found: {transactions_file}")
         sys.exit(1)
 
     # ========================
-    # LEER EXCELS
+    # READ EXCELS
     # ========================
     try:
-        df_resp = pd.read_excel(file_respuestas, dtype=str)
-        df_trans = pd.read_excel(file_transacciones, dtype=str)
+        df_res = pd.read_excel(responses_file, dtype=str)
+        df_trx = pd.read_excel(transactions_file, dtype=str)
     except Exception as e:
-        print(f"❌ Error al leer los archivos: {e}")
+        print(f"❌ Error reading files: {e}")
         sys.exit(1)
 
     # ========================
-    # CONVERTIR FECHA ISO A SOLO DÍA
+    # CONVERT DATE TO DAY ONLY
     # ========================
-    df_resp[col_fecha_resp] = pd.to_datetime(
-        df_resp[col_fecha_resp], errors="coerce"
-    ).dt.date
+    df_res[res_date_col] = pd.to_datetime(df_res[res_date_col], errors="coerce").dt.date
 
     # ========================
-    # FILTRAR SOLO TELEFONOS COMUNES
+    # FILTER ONLY COMMON PHONE NUMBERS
     # ========================
-    telefonos_comunes = set(df_resp[col_tel_resp]).intersection(
-        set(df_trans[col_tel_trans])
+    common_phone_numbers = set(df_res[res_phone_col]).intersection(
+        set(df_trx[trx_phone_col])
     )
-    df_resp_filtrado = df_resp[df_resp[col_tel_resp].isin(telefonos_comunes)]
-    df_trans_filtrado = df_trans[df_trans[col_tel_trans].isin(telefonos_comunes)]
+    df_res_filter = df_res[df_res[res_phone_col].isin(common_phone_numbers)]
+    df_trx_filter = df_trx[df_trx[trx_phone_col].isin(common_phone_numbers)]
 
     # ========================
-    # OBTENER PROCESADOR POR TELEFONO
+    # GET PROCESSOR BY PHONE NUMBER
     # ========================
-    df_procesador = df_trans_filtrado.drop_duplicates(subset=[col_tel_trans])
-    df_procesador = df_procesador[[col_tel_trans, "No. Externo/Pedido"]]
-    df_procesador["Pedido-Canal"] = (
-        df_procesador["No. Externo/Pedido"].str.split("-").str[-1]
+    df_processor = df_trx_filter.drop_duplicates(subset=[trx_phone_col])
+    df_processor = df_processor[[trx_phone_col, "No. Externo/Pedido"]]
+    df_processor["Pedido-Canal"] = (
+        df_processor["No. Externo/Pedido"].str.split("-").str[-1]
     )
-    df_procesador = df_procesador[[col_tel_trans, "Pedido-Canal"]]
+    df_processor = df_processor[[trx_phone_col, "Pedido-Canal"]]
 
     # ========================
-    # AGRUPAR RESPUESTAS POR DIA + TELEFONO + RESPUESTA
+    # GROUP RESPONSES BY DAY + PHONE NUMBER + MESSAGE
     # ========================
-    df_resp_contada = (
-        df_resp_filtrado.groupby([col_fecha_resp, col_tel_resp, col_resp])
+    df_res_to_count = (
+        df_res_filter.groupby([res_date_col, res_phone_col, res_col])
         .size()
         .reset_index(name="count")
     )
 
     # ========================
-    # ASOCIAR PROCESADOR
+    # MAKE PROCESSOR MATCH
     # ========================
     df_final = pd.merge(
-        df_resp_contada,
-        df_procesador,
-        left_on=col_tel_resp,
-        right_on=col_tel_trans,
+        df_res_to_count,
+        df_processor,
+        left_on=res_phone_col,
+        right_on=trx_phone_col,
         how="left",
     )
 
     # ========================
-    # AGRUPAR POR DIA + PROCESADOR + RESPUESTA
+    # GROUP BY DAY + PROCESSOR + MESSAGE
     # ========================
-    df_resultado = (
-        df_final.groupby([col_fecha_resp, "Pedido-Canal", col_resp])["count"]
+    df_result = (
+        df_final.groupby([res_date_col, "Pedido-Canal", res_col])["count"]
         .sum()
         .reset_index(name="Total")
     )
 
     # ========================
-    # EXPORTAR RESULTADO
+    # EXPORT RESULT
     # ========================
     try:
-        # Crear directorio de salida si no existe
-        os.makedirs(os.path.dirname(file_salida), exist_ok=True)
-        df_resultado.to_excel(file_salida, index=False)
-        print(f"✅ Proceso completado. Archivo generado: {file_salida}")
+        # Create output directory in case it's missing
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        df_result.to_excel(output_file, index=False)
+        print(f"✅ Process complete. Generated file: {output_file}")
     except Exception as e:
-        print(f"❌ Error al guardar el archivo: {e}")
+        print(f"❌ Error saving file: {e}")
         sys.exit(1)
 
 
