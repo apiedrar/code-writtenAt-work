@@ -72,7 +72,7 @@ async function apiRequestWithExtraction(
     const idValue = String(row[idColumn]);
 
     // Format URL with current ID
-    const url = `${urlTemplate}${idValue}/pedido`;
+    const url = `${urlTemplate}${idValue}`;
 
     console.log(`[${index + 1}/${totalIds}] Requesting URL: ${url}`);
 
@@ -410,28 +410,36 @@ async function main() {
     // Keys to extract - add or remove keys as needed
     // For nested keys, use dot notation, e.g., 'customer.id_externo'
     const keysToExtract = [
-      "data.transaccion.cargo_id",
-      "data.transaccion.monto",
-      "data.transaccion.afiliacion",
-      "data.transaccion.autorizacion_id",
-      "data.transaccion.conciliado",
-      "data.transaccion.fecha_creacion",
-      "data.transaccion.procesador",
-      "data.transaccion.tipo_operacion",
+      "data.cargo[0].id",
+      "data.cargo[0].monto",
+      "data.cargo[0].fecha",
+      "data.cargo[0.orden_id",
+      "data.cargo[0].metodo_pago",
+      "data.cargo[0].estatus",
+      "data.cargo[0].cliente.id",
+      "data.cargo[0].cliente.email",
+      "data.cargo[0].cliente.id_externo",
+      "data.cargo[0].tarjeta.iin",
+      "data.cargo[0].tarjeta.terminacion",
+      "data.cargo[0].tarjeta.producto",
       // Add any other keys you need
     ];
 
     // Define column mapping to simplify header names
     // Format: 'original_key_path': 'desired_column_name'
     const columnMapping = {
-      "data.transaccion.cargo_id": "idCargo",
-      "data.transaccion.monto": "montoTotal",
-      "data.transaccion.afiliacion": "Id Afiliacion",
-      "data.transaccion.autorizacion_id": "Autorizacion",
-      "data.transaccion.conciliado": "¿Conciliado?",
-      "data.transaccion.fecha_creacion": "Fecha",
-      "data.transaccion.procesador": "Procesador",
-      "data.transaccion.tipo_operacion": "Tipo de Operacion",
+      "data.cargo[0].id": "idCargo",
+      "data.cargo[0].monto": "montoTotal",
+      "data.cargo[0].fecha": "Fecha",
+      "data.cargo[0.orden_id": "No. Externo/Pedido",
+      "data.cargo[0].metodo_pago": "Metodo de Pago",
+      "data.cargo[0].estatus": "Estado de Operación",
+      "data.cargo[0].cliente.id": "ID Cliente",
+      "data.cargo[0].cliente.email": "Email Cliente",
+      "data.cargo[0].cliente.id_externo": "ID Externo Cliente",
+      "data.cargo[0].tarjeta.iin": "BIN",
+      "data.cargo[0].tarjeta.terminacion": "Terminación",
+      "data.cargo[0].tarjeta.producto": "Tipo Tarjeta",
       // Add mappings for other keys as needed
     };
 
