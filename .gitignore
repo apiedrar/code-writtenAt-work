@@ -2,9 +2,10 @@
 *.env
 *.xlsx
 *.DS_Store
-PythonScripts/extraer_info.py
-PythonScripts/rechazo_telcel.py
-PythonScripts/extraer.py
+python-scripts/extraer_info.py
+python-scripts/archivos_CDC.py
+python-scripts/extraer.py
+cpp-scripts/remove_mismatching_rows_clang
 
 # Directories
 node_modules
@@ -29,6 +30,7 @@ Contract-FullTime/cybersource-rest-samples-python/samples/*
 Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/V2dm-testing.py
 Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/Example_request.json
 Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/dm-karyworld_*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
