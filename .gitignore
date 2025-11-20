@@ -3,8 +3,8 @@
 *.xlsx
 *.DS_Store
 python-scripts/extraer_info.py
-python-scripts/archivos_CDC.py
 python-scripts/extraer.py
+python-scripts/archivos_CDC.py
 cpp-scripts/remove_mismatching_rows_clang
 
 # Directories
