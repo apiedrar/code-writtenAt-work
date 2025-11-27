@@ -411,8 +411,8 @@ async function main() {
   const keysToExtract = [
     "data.transaccion.uuid",
     "data.transaccion.estatus",
-    "data.transaccion.datos_claropagos.creacion",
-    "data.transaccion.datos_procesador.capturas[0].respuesta.data.datetime",
+    "data.transaccion.datos_pago.creacion",
+    "data.transaccion.datos_procesador.data.all.data.datetime",
     "data.transaccion.datos_comercio.pedido.id_externo",
     "data.transaccion.forma_pago",
     "data.transaccion.datos_pago.nombre",
@@ -450,19 +450,16 @@ async function main() {
     "data.transaccion.datos_comercio.pedido.articulos[0].nombre_producto",
     "data.transaccion.conciliado",
     "data.transaccion.fecha_conciliacion",
-    "http_code",
     "data.transaccion.datos_antifraude.datos_procesador[0].data.afsReply.cardScheme",
-    "data.transaccion.datos_procesador.data.all.data.authNum",
-    "data.transaccion.datos_comercio.cliente.id_externo",
+    "data.transaccion.updated_at",
   ];
 
   // Define column mapping to simplify header names
   const columnMapping = {
     "data.transaccion.uuid": "ID Transaccion",
     "data.transaccion.estatus": "Estado de Operacion",
-    "data.transaccion.datos_claropagos.creacion": "Fecha",
-    "data.transaccion.datos_procesador.capturas[0].respuesta.data.datetime":
-      "Fecha Captura",
+    "data.transaccion.datos_pago.creacion": "Fecha",
+    "data.transaccion.datos_procesador.data.all.data.datetime": "Fecha Captura",
     "data.transaccion.datos_comercio.pedido.id_externo": "Id Externo/Pedido",
     "data.transaccion.forma_pago": "Forma_Pago",
     "data.transaccion.datos_pago.nombre": "Nombre Tarjethabiente",
@@ -510,12 +507,9 @@ async function main() {
       "Id Producto",
     "data.transaccion.conciliado": "Cargo Conciliado",
     "data.transaccion.fecha_conciliacion": "Fecha Conciliacion",
-    http_code: "http code",
     "data.transaccion.datos_antifraude.datos_procesador[0].data.afsReply.cardScheme":
       "Tipo Tarjeta",
-    "data.transaccion.datos_procesador.data.all.data.authNum":
-      "Codigo de Autorizacion CYBS Amex",
-    "data.transaccion.datos_comercio.cliente.id_externo": "Identity ID",
+    "data.transaccion.updated_at": "Fecha Actualizacion",
   };
 
   // Run the function

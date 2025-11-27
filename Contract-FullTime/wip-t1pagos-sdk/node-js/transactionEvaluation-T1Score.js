@@ -221,9 +221,9 @@ function generateConfigFromRow(rowData) {
       // Convert string representations to boolean
       if (typeof value === "string") {
         value = value.toLowerCase().trim();
-        if (["true", "1", "yes", "y"].includes(value)) {
+        if (["true", "1", "si"].includes(value)) {
           config[column] = true;
-        } else if (["false", "0", "no", "n"].includes(value)) {
+        } else if (["false", "0", "no", ""].includes(value)) {
           config[column] = false;
         } else {
           config[column] = false;
