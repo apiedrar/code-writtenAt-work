@@ -18,6 +18,7 @@ const baseUrl = process.env.APIrefundBaseURL;
  * @param {string} baseUrl - Base API URL (without the endpoint path)
  * @param {string} cargoIdColumn - Name of the column in the CSV containing the cargo IDs (default: 'idCargo')
  * @param {string} amountColumn - Name of the column in the CSV containing the refund amounts (default: 'montoTotal')
+ * @param {string} merchantIdColumn - Name of the column in the CSV file containing the Merchant's UUID in T1's Ecosystem (default: 'comercioId')
  * @param {Object} headers - Headers for the API request including authorization
  */
 async function apiRefundRequests(
@@ -26,6 +27,7 @@ async function apiRefundRequests(
   baseUrl,
   cargoIdColumn = "idCargo",
   amountColumn = "montoTotal",
+  merchantIdColumn = "comercioId",
   headers = null
 ) {
   if (headers === null) {
@@ -51,6 +53,11 @@ async function apiRefundRequests(
         `Column '${amountColumn}' not found in the input CSV file`
       );
     }
+    if (!dfInput[0].hasOwnProperty(merchantIdColumn)) {
+      throw new Error(
+        `Column '${merchantIdColumn}' not found in the input CSV file`
+      );
+    }
   } catch (error) {
     console.error(`Error reading input CSV: ${error.message}`);
     return;
@@ -65,19 +72,21 @@ async function apiRefundRequests(
     const row = dfInput[index];
     const cargoId = String(row[cargoIdColumn]);
     const montoTotal = row[amountColumn];
+    const comercioId = String(row[merchantIdColumn]);
 
     // Construct the refund endpoint URL
-    const url = `${baseUrl}/v1/cargo/${cargoId}/reembolsar`;
+    const url = `${baseUrl}/admin/cargo/${cargoId}/reembolsar`;
 
     // Prepare the request body
     const requestBody = {
       monto: montoTotal,
+      comercio_uuid: comercioId,
     };
 
     console.log(
       `[${
         index + 1
-      }/${totalRows}] Requesting refund for cargo ID: ${cargoId}, amount: ${montoTotal}`
+      }/${totalRows}] Requesting refund for cargo ID: ${cargoId}, amount: ${montoTotal}, merchant: ${comercioId}`
     );
     console.log(`URL: ${url}`);
     console.log(`Body: ${JSON.stringify(requestBody)}`);
@@ -85,6 +94,7 @@ async function apiRefundRequests(
     let resultItem = {
       [cargoIdColumn]: cargoId,
       [amountColumn]: montoTotal,
+      [merchantIdColumn]: comercioId,
       request_url: url,
       request_timestamp: new Date().toISOString(),
     };
@@ -169,6 +179,7 @@ async function apiRefundRequests(
       const columnOrder = [
         cargoIdColumn,
         amountColumn,
+        merchantIdColumn,
         "success",
         "status_code",
         "response_message",
@@ -244,7 +255,7 @@ Usage: node ${path.basename(__filename)} <inputCsvFile> [outputExcelFile]
 
 Arguments:
   inputCsvFile     Required. Path to the input CSV file containing cargo IDs and amounts
-                   Must contain columns: 'idCargo' and 'montoTotal'
+                   Must contain columns: 'idCargo', 'montoTotal' and 'comercioId'
   outputExcelFile  Optional. Path for the output Excel file. 
                    If not provided, will be generated automatically in the same directory as input file
 
@@ -259,6 +270,7 @@ Examples:
 Required CSV Columns:
   - idCargo: The cargo ID for the refund request
   - montoTotal: The refund amount
+  - comercioId: Merchant's UUID in T1 Ecosystem (since it's an Admin request)
 
 Environment Variables Required:
   - api_token: Your API authorization token
@@ -357,6 +369,7 @@ async function main() {
     baseUrl,
     "idCargo", // Change this if your CSV column has a different name
     "montoTotal", // Change this if your CSV column has a different name
+    "comercioId",
     headers
   );
 }
