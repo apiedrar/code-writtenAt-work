@@ -64,11 +64,6 @@ const OUTPUT_EXCEL =
     `Responses-TransactionEvaluation-${timestamp}.xlsx`
   );
 
-const headers = {
-  "Content-Type": "application/json",
-  "x-api-key": apiKey,
-};
-
 /**
  * Flatten nested object into single level with underscore notation keys
  */
@@ -112,6 +107,27 @@ function generateDeviceFingerprint() {
 }
 
 /**
+ * Get current date/time in ISO format with -06:00 timezone (Mexico City)
+ */
+function getCurrentMexicoTime() {
+  const now = new Date();
+
+  // Get UTC time and adjust to -06:00 timezone
+  const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
+  const mexicoTime = new Date(utcTime - 6 * 3600000);
+
+  // Format: YYYY-MM-DDTHH:mm:ss-06:00
+  const year = mexicoTime.getFullYear();
+  const month = String(mexicoTime.getMonth() + 1).padStart(2, "0");
+  const day = String(mexicoTime.getDate()).padStart(2, "0");
+  const hours = String(mexicoTime.getHours()).padStart(2, "0");
+  const minutes = String(mexicoTime.getMinutes()).padStart(2, "0");
+  const seconds = String(mexicoTime.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}-06:00`;
+}
+
+/**
  * Load email, phone data, and config columns from Excel file
  */
 function loadData() {
@@ -134,7 +150,7 @@ function loadData() {
     const columns = Object.keys(data[0]);
 
     // Check for required base columns
-    const requiredBaseColumns = ["email", "number"];
+    const requiredBaseColumns = ["number"];
     let availableColumns = columns;
 
     // Handle case where email might be in first column without proper header
@@ -166,12 +182,14 @@ function loadData() {
     }
 
     // Clean and validate data
-    const cleanedData = data.filter((row) => row.email && row.number);
+    const cleanedData = data.filter((row) => row.number);
 
     // Convert phone numbers to strings and clean them
     cleanedData.forEach((row) => {
       row.number = String(row.number).trim();
-      row.email = String(row.email).trim();
+      if (row.email) {
+        row.email = String(row.email).trim();
+      }
     });
 
     // Identify config columns
@@ -198,11 +216,31 @@ function loadData() {
 
     // Fallback data
     return [
-      { email: "test1@example.com", number: "5511111111", _config_columns: [] },
-      { email: "test2@example.com", number: "3322222222", _config_columns: [] },
-      { email: "test3@example.com", number: "8133333333", _config_columns: [] },
-      { email: "test4@example.com", number: "5544444444", _config_columns: [] },
-      { email: "test5@example.com", number: "3355555555", _config_columns: [] },
+      {
+        email: "null@cybersource.com",
+        number: "5511111111",
+        _config_columns: [],
+      },
+      {
+        email: "null@cybersource.com",
+        number: "3322222222",
+        _config_columns: [],
+      },
+      {
+        email: "null@cybersource.com",
+        number: "8133333333",
+        _config_columns: [],
+      },
+      {
+        email: "null@cybersource.com",
+        number: "5544444444",
+        _config_columns: [],
+      },
+      {
+        email: "null@cybersource.com",
+        number: "3355555555",
+        _config_columns: [],
+      },
     ];
   }
 }
@@ -238,15 +276,7 @@ function generateConfigFromRow(rowData) {
     }
   });
 
-  // If no config columns found, fall back to original static config
-  if (Object.keys(config).length === 0) {
-    const defaultConfigKeys = [];
-
-    defaultConfigKeys.forEach((key) => {
-      config[key] = true;
-    });
-  }
-
+  // Return the config as-is, even if empty
   return config;
 }
 
@@ -255,10 +285,46 @@ function generateConfigFromRow(rowData) {
  */
 function generatePayload(email, number, rowData) {
   const randInt = () => Math.floor(Math.random() * 10) + 1;
-  const randFloat = () => parseFloat((Math.random() * 989.99 + 10).toFixed(2));
+  const randFloat = () => parseFloat((Math.random() * 278 + 10).toFixed(2));
+
+  const currentTime = getCurrentMexicoTime(); // Get current time in Mexico City's Timezone
 
   // Generate dynamic config from row data
   const dynamicConfig = generateConfigFromRow(rowData);
+
+  // Build the client object
+  const clientObject = {
+    id: uuidv4(),
+    name: "John",
+    paternal_surname: "Doe",
+    maternal_surname: "Name",
+    rfc: "VECJ880326MC",
+    gender: "Hombre",
+    birthdate: "1990-12-22",
+    phone: {
+      number: number,
+    },
+    address: {
+      street: "Avenida Juarez",
+      external_number: "213",
+      internal_number: "1A",
+      town: "Roma Norte",
+      city: "Alcaldia Gustavo A. Madero",
+      state: "MX",
+      country: "MX",
+      zip_code: "09960",
+    },
+  };
+
+  // Only add email if it exists and is valid
+  if (email && email !== "N/A") {
+    clientObject.email = email;
+  }
+
+  // Only add config if it has keys
+  if (Object.keys(dynamicConfig).length > 0) {
+    clientObject.config = dynamicConfig;
+  }
 
   return {
     transaction_id: uuidv4(),
@@ -268,7 +334,7 @@ function generatePayload(email, number, rowData) {
     },
     purchase: {
       id: uuidv4(),
-      created: "2025-04-22T12:48:10-08:00",
+      created: currentTime,
       shipping_address: {
         street: "Avenida Juarez",
         external_number: "213",
@@ -286,61 +352,23 @@ function generatePayload(email, number, rowData) {
         {
           sku: "12345",
           ean_upc: "4011 200296908",
-          name: "Lentes",
-          quantity: randInt(),
-          unit_amount: randFloat(),
-        },
-        {
-          sku: "12345",
-          ean_upc: "4011 200296909",
-          name: "Petalo 24 pzas",
-          quantity: randInt(),
+          name: "Set 2 Pack B__xer Hanes para Hombre color_talla_ Colores_M",
+          quantity: 1,
           unit_amount: randFloat(),
         },
       ],
-      total_items: randInt(),
-      delivery_date: "2024-11-07T21:20:16-06:00",
+      total_items: 1,
+      delivery_date: currentTime,
       delivery_service: "UPS",
       delivery_tracking: "12346535038485",
-      delivery_amount: randFloat(),
-      items_amount: randFloat(),
+      delivery_amount: 0,
+      items_amount: 1,
       total_amount: randFloat(),
       device_fingerprint: generateDeviceFingerprint(),
     },
-    client: {
-      id: uuidv4(),
-      name: "John",
-      paternal_surname: "Doe",
-      maternal_surname: "Name",
-      email: email,
-      rfc: "VECJ880326MC",
-      gender: "Hombre",
-      birthdate: "1999-10-23",
-      phone: {
-        number: number,
-      },
-      address: {
-        street: "Avenida Juarez",
-        external_number: "213",
-        internal_number: "1A",
-        town: "Roma Norte",
-        city: "Alcaldia Gustavo A. Madero",
-        state: "MX",
-        country: "MX",
-        zip_code: "09960",
-      },
-      config: dynamicConfig,
-    },
+    client: clientObject,
     merchant: {
-      custom_1: uuidv4(),
-      custom_2: "ABCD123456EFGH12",
-      custom_3: number,
-      custom_4: "2001:db8::1",
-      custom_6: uuidv4(),
-      custom_15: number,
-      custom_21: "null@cybersource.com",
-      custom_25: "12345-6789",
-      custom_31: "http://www.ejemplo.com",
+      1: "POC Sears",
     },
     payment_method: {
       type: "debit card",
@@ -374,6 +402,11 @@ async function main() {
   );
   console.log("=".repeat(60));
 
+  const headers = {
+    "Content-Type": "application/json",
+    "x-api-key": apiKey,
+  };
+
   // Display file paths being used
   console.log(`📁 Input file: ${DATA_XLSX_PATH}`);
   console.log(`📁 Output file: ${OUTPUT_EXCEL}`);
@@ -394,7 +427,8 @@ async function main() {
 
   for (let i = 0; i < dataRecords.length; i++) {
     const record = dataRecords[i];
-    const { email, number } = record;
+    const { number } = record;
+    const email = record.email || "N/A"; // Provide default value here
     const testNumber = i + 1;
 
     // Generate payload with dynamic config and make API request
@@ -402,7 +436,9 @@ async function main() {
 
     // Show config info for first few records
     if (testNumber <= 3) {
-      const configKeys = Object.keys(payload.client.config);
+      const configKeys = payload.client.config
+        ? Object.keys(payload.client.config)
+        : [];
       const configPreview = {};
       configKeys.slice(0, 5).forEach((key) => {
         configPreview[key] = payload.client.config[key];
@@ -421,22 +457,27 @@ async function main() {
       email: email,
       number: number,
       timestamp: new Date().toISOString().replace("T", " ").substring(0, 19),
-      config_keys_count: Object.keys(payload.client.config).length,
+      config_keys_count: payload.client.config
+        ? Object.keys(payload.client.config).length
+        : 0,
     };
 
     // Add config data to results for reference
-    Object.entries(payload.client.config).forEach(([key, value]) => {
-      rowData[`config_${key}`] = value;
-    });
+    if (payload.client.config) {
+      Object.entries(payload.client.config).forEach(([key, value]) => {
+        rowData[`config_${key}`] = value;
+      });
+    }
 
     try {
       const response = await axios.post(hiddenUrl, payload, { headers });
       const statusCode = response.status;
 
+      // SUCCESS LOG - should be here
       console.log(
-        `[${testNumber.toString().padStart(3)}/${
-          dataRecords.length
-        }] Email: ${email
+        `[${testNumber.toString().padStart(3)}/${dataRecords.length}] Email: ${(
+          email || "N/A"
+        )
           .substring(0, 25)
           .padEnd(25)} | Phone: ${number} | Status: ${statusCode}`
       );
@@ -459,19 +500,21 @@ async function main() {
         rowData.error_message = `HTTP ${statusCode} error`;
       }
     } catch (error) {
+      // ERROR LOG - should be here, and shouldn't reference statusCode
       console.log(
-        `[${testNumber.toString().padStart(3)}/${
-          dataRecords.length
-        }] Email: ${email
+        `[${testNumber.toString().padStart(3)}/${dataRecords.length}] Email: ${(
+          email || "N/A"
+        )
           .substring(0, 25)
           .padEnd(25)} | Phone: ${number} | ERROR: ${error.message}`
       );
+
       rowData = {
         test_id: testNumber,
         email: email,
         number: number,
         status_code: "ERROR",
-        timestamp: new Date().toISOString().replace("T", " ").substring(0, 19),
+        timestamp: getCurrentMexicoTime().replace("T", " ").substring(0, 19),
         error_message: error.message,
         api_response_raw: "",
         config_keys_count: 0,
@@ -488,8 +531,8 @@ async function main() {
 
   // Auto-adjust column widths
   const columnWidths = [];
-  const headers = Object.keys(results[0] || {});
-  headers.forEach((header, index) => {
+  const columnHeaders = Object.keys(results[0] || {});
+  columnHeaders.forEach((header, index) => {
     let maxLength = header.length;
     results.forEach((row) => {
       const cellValue = String(row[header] || "");
