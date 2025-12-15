@@ -7,33 +7,42 @@ Usage:
 
 Example:
     python extract_json_fields.py data.xlsx output.xlsx "_advanced_info.claropagos.comercio_uuid" "timestamp"
+    python extract_json_fields.py data.xlsx output.xlsx "_advanced_info.context[0].message"
 """
 
 import sys
 import json
+import re
 import pandas as pd
 from pathlib import Path
 
 
 def get_nested_field(data, field_path):
     """
-    Extract a nested field from a dictionary using dot notation.
+    Extract a nested field from a dictionary using dot notation with array support.
 
     Args:
         data: Dictionary to extract from
-        field_path: Dot-separated path to field (e.g., "a.b.c")
+        field_path: Dot-separated path to field with optional array indices
+                   (e.g., "a.b.c" or "a.b[0].c")
 
     Returns:
         The value at the specified path, or None if not found
     """
-    keys = field_path.split(".")
+    # Split the path into parts, handling array indices
+    # Pattern matches: word characters, dots, and [index] notation
+    pattern = r'([^.\[]+)|\[(\d+)\]'
+    matches = re.findall(pattern, field_path)
+    
     value = data
-
     try:
-        for key in keys:
-            value = value[key]
+        for key, index in matches:
+            if key:  # It's a dictionary key
+                value = value[key]
+            elif index:  # It's an array index
+                value = value[int(index)]
         return value
-    except (KeyError, TypeError, IndexError):
+    except (KeyError, TypeError, IndexError, AttributeError):
         return None
 
 
@@ -87,8 +96,12 @@ def main():
         print(
             '  python extract_json_fields.py data.xlsx output.xlsx "_advanced_info.claropagos.comercio_uuid"'
         )
+        print(
+            '  python extract_json_fields.py data.xlsx output.xlsx "_advanced_info.context[0].message"'
+        )
         print("\nField format:")
         print("  Use dot notation for nested fields: 'parent.child.grandchild'")
+        print("  Use brackets for array indices: 'parent.array[0].field'")
         sys.exit(1)
 
     input_file = sys.argv[1]

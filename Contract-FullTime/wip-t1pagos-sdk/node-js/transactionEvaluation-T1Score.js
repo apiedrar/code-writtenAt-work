@@ -150,7 +150,7 @@ function loadData() {
     const columns = Object.keys(data[0]);
 
     // Check for required base columns
-    const requiredBaseColumns = ["number"];
+    const requiredBaseColumns = ["phoneNumber"];
     let availableColumns = columns;
 
     // Handle case where email might be in first column without proper header
@@ -182,19 +182,19 @@ function loadData() {
     }
 
     // Clean and validate data
-    const cleanedData = data.filter((row) => row.number);
+    const cleanedData = data.filter((row) => row.phoneNumber);
 
     // Convert phone numbers to strings and clean them
     cleanedData.forEach((row) => {
-      row.number = String(row.number).trim();
+      row.phoneNumber = String(row.phoneNumber).trim();
       if (row.email) {
         row.email = String(row.email).trim();
       }
     });
 
-    // Identify config columns
-    const configColumns = availableColumns.filter(
-      (col) => !requiredBaseColumns.includes(col)
+    // Identify config columns - only those that start with "config."
+    const configColumns = availableColumns.filter((col) =>
+      col.startsWith("config.")
     );
 
     console.log(`✅ Loaded ${cleanedData.length} records from Excel`);
@@ -218,27 +218,27 @@ function loadData() {
     return [
       {
         email: "null@cybersource.com",
-        number: "5511111111",
+        phoneNumber: "5511111111",
         _config_columns: [],
       },
       {
         email: "null@cybersource.com",
-        number: "3322222222",
+        phoneNumber: "3322222222",
         _config_columns: [],
       },
       {
         email: "null@cybersource.com",
-        number: "8133333333",
+        phoneNumber: "8133333333",
         _config_columns: [],
       },
       {
         email: "null@cybersource.com",
-        number: "5544444444",
+        phoneNumber: "5544444444",
         _config_columns: [],
       },
       {
         email: "null@cybersource.com",
-        number: "3355555555",
+        phoneNumber: "3355555555",
         _config_columns: [],
       },
     ];
@@ -276,8 +276,61 @@ function generateConfigFromRow(rowData) {
     }
   });
 
+  // Remove "config." prefix from keys for the final config object
+  const cleanedConfig = {};
+  Object.entries(config).forEach(([key, value]) => {
+    const cleanKey = key.startsWith("config.") ? key.substring(7) : key;
+    cleanedConfig[cleanKey] = value;
+  });
+
   // Return the config as-is, even if empty
-  return config;
+  return cleanedConfig;
+}
+
+/**
+ * Map ISO 3166-2:MX (3-character) codes to 2-character codes
+ */
+function mapStateToTwoChar(stateCode) {
+  if (!stateCode) return "MX";
+
+  const stateMapping = {
+    // ISO 3166-2:MX (3-char) to 2-char codes
+    AGU: "AG",
+    BCN: "BC",
+    BCS: "BS",
+    CAM: "CM",
+    CHP: "CS",
+    CHH: "CH",
+    COA: "CO",
+    COL: "CL",
+    CMX: "DF",
+    DUR: "DG",
+    GUA: "GT",
+    GRO: "GR",
+    HID: "HG",
+    JAL: "JA",
+    MEX: "EM",
+    MIC: "MI",
+    MOR: "MO",
+    NAY: "NA",
+    NLE: "NL",
+    OAX: "OA",
+    PUE: "PU",
+    QUE: "QT",
+    ROO: "QR",
+    SLP: "SL",
+    SIN: "SI",
+    SON: "SO",
+    TAB: "TB",
+    TAM: "TM",
+    TLA: "TL",
+    VER: "VE",
+    YUC: "YU",
+    ZAC: "ZA",
+  };
+
+  const normalizedState = stateCode.toUpperCase().trim();
+  return stateMapping[normalizedState] || normalizedState.substring(0, 2);
 }
 
 /**
@@ -292,27 +345,48 @@ function generatePayload(email, number, rowData) {
   // Generate dynamic config from row data
   const dynamicConfig = generateConfigFromRow(rowData);
 
+  // Extract client data from rowData, with fallback values
+  const clientName = rowData.Nombre_cliente || "John";
+  const paternalSurname = rowData.Apellido_paterno || "Doe";
+  const maternalSurname = rowData.Apellido_materno || "Name";
+
+  // RFC validation: if length is >= 12 and <= 13, use as-is; otherwise trim to first 12 characters
+  let rfcCurp = rowData.RFCoCURP || "VECJ880326MC";
+  if (rfcCurp) {
+    const rfcLength = rfcCurp.length;
+    if (rfcLength < 12 || rfcLength > 13) {
+      rfcCurp = rfcCurp.substring(0, 12);
+    }
+  }
+
+  // Extract address data from rowData, with fallback values
+  const street = rowData.Calle || "Avenida Juarez";
+  const externalNumber = rowData.Numero_calle || "213";
+  const city = rowData.Ciudad || "Alcaldia Gustavo A. Madero";
+  const state = mapStateToTwoChar(rowData.Estado) || "MX";
+  const zipCode = rowData.CP || "09960";
+
   // Build the client object
   const clientObject = {
     id: uuidv4(),
-    name: "John",
-    paternal_surname: "Doe",
-    maternal_surname: "Name",
-    rfc: "VECJ880326MC",
+    name: clientName,
+    paternal_surname: paternalSurname,
+    maternal_surname: maternalSurname,
+    rfc: rfcCurp,
     gender: "Hombre",
     birthdate: "1990-12-22",
     phone: {
       number: number,
     },
     address: {
-      street: "Avenida Juarez",
-      external_number: "213",
+      street: street,
+      external_number: String(externalNumber),
       internal_number: "1A",
       town: "Roma Norte",
-      city: "Alcaldia Gustavo A. Madero",
-      state: "MX",
+      city: city,
+      state: state,
       country: "MX",
-      zip_code: "09960",
+      zip_code: String(zipCode),
     },
   };
 
@@ -336,14 +410,14 @@ function generatePayload(email, number, rowData) {
       id: uuidv4(),
       created: currentTime,
       shipping_address: {
-        street: "Avenida Juarez",
-        external_number: "213",
+        street: street,
+        external_number: String(externalNumber),
         internal_number: "1A",
         town: "Roma Norte",
-        city: "Alcaldia Gustavo A. Madero",
-        state: "MX",
+        city: city,
+        state: state,
         country: "MX",
-        zip_code: "09960",
+        zip_code: String(zipCode),
       },
       phone: {
         number: number,
@@ -352,7 +426,7 @@ function generatePayload(email, number, rowData) {
         {
           sku: "12345",
           ean_upc: "4011 200296908",
-          name: "Set 2 Pack B__xer Hanes para Hombre color_talla_ Colores_M",
+          name: "Set 2 Pack Producto Dummy POC Kueski",
           quantity: 1,
           unit_amount: randFloat(),
         },
@@ -368,7 +442,7 @@ function generatePayload(email, number, rowData) {
     },
     client: clientObject,
     merchant: {
-      1: "POC Sears",
+      1: "POC Kueski",
     },
     payment_method: {
       type: "debit card",
@@ -377,14 +451,14 @@ function generatePayload(email, number, rowData) {
       expiration_month: "12",
       expiration_year: "2030",
       address: {
-        street: "Avenida Juárez",
-        external_number: "213",
+        street: street,
+        external_number: String(externalNumber),
         internal_number: "1A",
         town: "Roma Norte",
-        city: "N/A",
-        state: "MX",
+        city: city,
+        state: state,
         country: "MX",
-        zip_code: "09960",
+        zip_code: String(zipCode),
       },
       phone: {
         number: number,
@@ -398,7 +472,7 @@ function generatePayload(email, number, rowData) {
  */
 async function main() {
   console.log(
-    "🚀 Starting ClaroScore Originación API Test with Dynamic Config"
+    "🚀 Starting ClaroScore Transaction Evaluation API Test with Dynamic Config"
   );
   console.log("=".repeat(60));
 
@@ -427,12 +501,12 @@ async function main() {
 
   for (let i = 0; i < dataRecords.length; i++) {
     const record = dataRecords[i];
-    const { number } = record;
+    const { phoneNumber } = record;
     const email = record.email || "N/A"; // Provide default value here
     const testNumber = i + 1;
 
     // Generate payload with dynamic config and make API request
-    const payload = generatePayload(email, number, record);
+    const payload = generatePayload(email, phoneNumber, record);
 
     // Show config info for first few records
     if (testNumber <= 3) {
@@ -446,8 +520,7 @@ async function main() {
       console.log(
         `[${testNumber
           .toString()
-          .padStart(3)}] Config preview: ${JSON.stringify(configPreview)}${
-          configKeys.length > 5 ? "..." : ""
+          .padStart(3)}] Config preview: ${JSON.stringify(configPreview)}${configKeys.length > 5 ? "..." : ""
         } (Total: ${configKeys.length} keys)`
       );
     }
@@ -455,7 +528,7 @@ async function main() {
     let rowData = {
       test_id: testNumber,
       email: email,
-      number: number,
+      phoneNumber: phoneNumber,
       timestamp: new Date().toISOString().replace("T", " ").substring(0, 19),
       config_keys_count: payload.client.config
         ? Object.keys(payload.client.config).length
@@ -470,8 +543,20 @@ async function main() {
     }
 
     try {
+      // Print request payload
+      // console.log("\n" + "=".repeat(80));
+      // console.log(`REQUEST PAYLOAD [${testNumber}]:`);
+      // console.log(JSON.stringify(payload, null, 2));
+      // console.log("=".repeat(80) + "\n");
+
       const response = await axios.post(hiddenUrl, payload, { headers });
       const statusCode = response.status;
+
+      // Print response payload
+      // console.log("\n" + "=".repeat(80));
+      // console.log(`RESPONSE PAYLOAD [${testNumber}] - Status: ${statusCode}`);
+      // console.log(JSON.stringify(response.data, null, 2));
+      // console.log("=".repeat(80) + "\n");
 
       // SUCCESS LOG - should be here
       console.log(
@@ -479,7 +564,7 @@ async function main() {
           email || "N/A"
         )
           .substring(0, 25)
-          .padEnd(25)} | Phone: ${number} | Status: ${statusCode}`
+          .padEnd(25)} | Phone: ${phoneNumber} | Status: ${statusCode}`
       );
 
       rowData.status_code = statusCode;
@@ -500,23 +585,43 @@ async function main() {
         rowData.error_message = `HTTP ${statusCode} error`;
       }
     } catch (error) {
+      // Print request payload on error
+      console.log("\n" + "=".repeat(80));
+      console.log(`REQUEST PAYLOAD [${testNumber}] - FAILED:`);
+      console.log(JSON.stringify(payload, null, 2));
+      console.log("=".repeat(80));
+
+      // Print error response if available
+      if (error.response) {
+        console.log("\n" + "=".repeat(80));
+        console.log(
+          `ERROR RESPONSE [${testNumber}] - Status: ${error.response.status}`
+        );
+        console.log(JSON.stringify(error.response.data, null, 2));
+        console.log("=".repeat(80) + "\n");
+      } else {
+        console.log(`\nNo response received from server\n`);
+      }
+
       // ERROR LOG - should be here, and shouldn't reference statusCode
       console.log(
         `[${testNumber.toString().padStart(3)}/${dataRecords.length}] Email: ${(
           email || "N/A"
         )
           .substring(0, 25)
-          .padEnd(25)} | Phone: ${number} | ERROR: ${error.message}`
+          .padEnd(25)} | Phone: ${phoneNumber} | ERROR: ${error.message}`
       );
 
       rowData = {
         test_id: testNumber,
         email: email,
-        number: number,
-        status_code: "ERROR",
+        phoneNumber: phoneNumber,
+        status_code: error.response ? error.response.status : "ERROR",
         timestamp: getCurrentMexicoTime().replace("T", " ").substring(0, 19),
         error_message: error.message,
-        api_response_raw: "",
+        api_response_raw: error.response
+          ? JSON.stringify(error.response.data)
+          : "",
         config_keys_count: 0,
       };
     }

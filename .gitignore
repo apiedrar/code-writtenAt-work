@@ -6,6 +6,7 @@ python-scripts/extraer_info.py
 python-scripts/extraer.py
 python-scripts/archivos_CDC.py
 cpp-scripts/remove_mismatching_rows_clang
+transactionEvaluation-T1Score.js.bak
 
 # Directories
 node_modules
@@ -29,7 +30,7 @@ Contract-FullTime/cybersource-rest-samples-python/samples/*
 # Files
 Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/V2dm-testing.py
 Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/Example_request.json
-Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/dm-karyworld_*
+Contract-FullTime/cybersource-rest-samples-python/samples/RiskManagement/DecisionManager/dm-karyworld*
 
 
 # Byte-compiled / optimized / DLL files
